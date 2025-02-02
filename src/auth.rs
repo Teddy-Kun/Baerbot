@@ -1,74 +1,42 @@
-use eyre::{eyre, Result};
-use serde::Deserialize;
-use std::net::TcpListener;
-use std::{io::Read, net::TcpStream};
-use tracing::{error, trace};
-use url::Url;
+use std::time::Duration;
 
-#[derive(Debug, Default, Deserialize)]
-pub struct TwitchAuthParams {
-	pub code: Option<String>,
-	pub scope: Option<String>,
-	pub state: Option<String>,
-	pub error: Option<String>,
-	pub error_description: Option<String>,
-}
+use eyre::Result;
+use tokio::time::sleep;
+use tracing::{debug, error, info};
+use twitch_api::HelixClient;
+use twitch_oauth2::{ClientId, DeviceUserTokenBuilder, Scope, UserToken};
 
-pub fn parse_auth_code(stream: &mut TcpStream) -> Result<TwitchAuthParams> {
-	let mut buffer = String::new();
-	stream.read_to_string(&mut buffer)?;
+async fn wait_for_code(dur: Duration, url: &str) {
+	debug!("Got duration: {:#?}", dur);
 
-	trace!("buffer:\n{}", buffer);
+	let handle = open::that_in_background(url).join();
 
-	let mut headers = [httparse::EMPTY_HEADER; 16];
-	let mut req = httparse::Request::new(&mut headers);
-
-	if req.parse(&buffer.as_bytes()).is_ok() {
-		if let Some(path) = req.path {
-			let url_str = format!("http://localhost{}", path); // Dummy host needed for parsing
-			if let Ok(url) = Url::parse(&url_str) {
-				let query_params: TwitchAuthParams =
-					serde_urlencoded::from_str(url.query().unwrap_or(""))?;
-				return Ok(query_params);
-			}
-		}
+	if let Err(e) = handle {
+		error!("Failed to open browser: {:#?}", e);
 	}
 
-	Err(eyre!("Failed to parse response"))
+	// usually its 5 seconds, which I find too short
+	sleep(dur).await;
 }
 
-pub async fn get_auth_code() -> Result<TwitchAuthParams> {
-	let listener = TcpListener::bind("127.0.0.1:35594")?;
+pub async fn twitch_auth() -> Result<UserToken> {
+	let client_id = ClientId::new("15xr4zw5ue7jxpbvt0jwwrwywqch9a".to_string());
+	let scopes = vec![Scope::ChatEdit, Scope::ChatRead];
 
-	// see https://dev.twitch.tv/docs/authentication/scopes/
-	let scopes = ["chat:edit", "chat:read"];
+	let client: HelixClient<reqwest::Client> = HelixClient::default();
 
-	let params = [
-		("client_id", "15xr4zw5ue7jxpbvt0jwwrwywqch9a"),
-		("redirect_uri", "http://localhost:35594/"),
-		("response_type", "code"),
-		("scope", &scopes.join(" ")),
-	];
+	let mut builder = DeviceUserTokenBuilder::new(client_id, scopes);
+	let code = builder.start(&client).await?;
 
-	let q = serde_urlencoded::to_string(params)?;
-	let url = format!("https://id.twitch.tv/oauth2/authorize?{}", q);
+	debug!("code: {:#?}", code);
 
-	open::that(url.as_str())?;
+	let url = code.verification_uri.clone();
 
-	for stream in listener.incoming() {
-		match stream {
-			Ok(mut stream) => {
-				let auth = parse_auth_code(&mut stream)?;
+	let token = builder
+		.wait_for_code(&client, |dur: Duration| wait_for_code(dur, &url))
+		.await?;
 
-				// TODO: respond so that the browser can close gracefully
+	info!("Got token: {:#?}", token);
 
-				return Ok(auth);
-			}
-			Err(e) => {
-				error!("Error: {}", e);
-			}
-		}
-	}
-
-	Err(eyre!("Failed to get auth code"))
+	Ok(token)
 }

@@ -36,15 +36,12 @@ clap = { version = "4.5.27", features = [
 clap_config = "0.1.1"
 dirs = "6.0.0"
 tracing-error = "0.2.1"
-async-trait = "0.1.86"
 chrono = "0.4.39"
 open = "5.3.2"
-serde_urlencoded = "0.7.1"
-httparse = "1.10.0"
-url = "2.5.4"
-oauth2 = { version = "5.0.0", default-features = false, features = [
-    "native-tls",
-    "reqwest",
+secret-service = { version = "4.0.0", features = ["rt-tokio-crypto-rust"] }
+keyring = { version = "3.6.1", features = [
+    "linux-native-async-persistent",
+    "windows-native",
 ] }
 
 [profile.release]

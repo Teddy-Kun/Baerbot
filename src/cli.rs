@@ -9,8 +9,6 @@ use tracing::warn;
 #[derive(ClapConfig, Clone, Parser, Debug, Deserialize, Serialize)]
 #[command(version, about, long_about = None)]
 struct Args {
-	#[arg(short, long, env, help = "Token to login to Twitch")]
-	pub token: Option<Arc<str>>,
 	#[arg(short, long, env, help = "Your Twitch username")]
 	pub username: Option<Arc<str>>,
 
@@ -20,7 +18,6 @@ struct Args {
 
 #[derive(Debug, Clone)]
 pub struct Config {
-	pub token: Arc<str>,
 	pub username: Arc<str>,
 }
 
@@ -61,7 +58,6 @@ impl Config {
 		let args = Args::from_merged(matches, config);
 
 		let config = Config {
-			token: args.token.ok_or(eyre!("Missing Token"))?,
 			username: args.username.ok_or(eyre!("Missing Username"))?,
 		};
 

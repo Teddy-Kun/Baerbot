@@ -1,27 +1,20 @@
-use cli::Config;
 use color_eyre::eyre::Result;
+use tracing::{debug, info};
 use twitch_api::HelixClient;
-use twitch_oauth2::{AccessToken, UserToken};
+use twitch_oauth2::UserToken;
 
 pub mod auth;
 pub mod chat;
 pub mod cli;
 
-pub async fn init() -> Result<()> {
-	let conf = Config::get()?;
-
-	dbg!(&conf);
-
-	// Create the HelixClient, which is used to make requests to the Twitch API
+pub async fn print_channel_info(username: &str, token: &UserToken) -> Result<()> {
 	let client: HelixClient<reqwest::Client> = HelixClient::default();
-	// Create a UserToken, which is used to authenticate requests.
-	let token = UserToken::from_token(&client, AccessToken::from(conf.token.as_ref())).await?;
 
-	println!(
+	debug!("token user: {:#?}", token.user_id);
+
+	info!(
 		"Channel: {:?}",
-		client
-			.get_channel_from_login(conf.username.as_ref(), &token)
-			.await?
+		client.get_channel_from_login(username, token).await?
 	);
 
 	Ok(())

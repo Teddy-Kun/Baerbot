@@ -1,20 +1,20 @@
 use color_eyre::eyre::Result;
-use tedbot::{auth, chat, init, install_tracing};
-use tracing::debug;
+use tedbot::{auth, chat, cli::Config, install_tracing, print_channel_info};
 
 #[tokio::main]
 async fn main() -> Result<()> {
 	install_tracing();
 	color_eyre::install()?;
 
-	let auth_code = auth::get_auth_code().await?;
-	debug!("Auth code: {:#?}", auth_code);
+	let conf = Config::get()?;
 
-	todo!("Get access token from auth code");
+	let token = auth::twitch_auth().await?;
+
+	print_channel_info(conf.username.as_ref(), &token).await?;
+
+	todo!("Use Token {:#?}", &token);
 
 	chat::chat().await?;
-
-	init().await?;
 
 	Ok(())
 }
