@@ -1,0 +1,45 @@
+[package]
+name = "tedbot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+twitch_api = { version = "0.7.0", features = [
+    "twitch_oauth2",
+    "client",
+    "helix",
+    "eventsub",
+    "hmac",
+    "reqwest",
+] }
+twitch_oauth2 = { version = "0.15.1", features = ["client"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+toml = "0.8.19"
+serde = { version = "1.0.217", features = ["derive", "rc"] }
+tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
+tokio-tungstenite = { version = "0.26.1", features = ["url"] }
+reqwest = { version = "0.12.12" }
+eyre = "0.6.12"
+futures = "0.3.31"
+color-eyre = "0.6.3"
+twitch-irc = "5.0.1"
+clap = { version = "4.5.27", features = [
+    "derive",
+    "env",
+    "unicode",
+    "wrap_help",
+] }
+clap_config = "0.1.1"
+dirs = "6.0.0"
+tracing-error = "0.2.1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "unwind"
+strip = true
+
+[profile.dev.package.backtrace]
+opt-level = 3
