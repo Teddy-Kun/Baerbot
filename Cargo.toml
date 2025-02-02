@@ -23,7 +23,10 @@ reqwest = { version = "0.12.12" }
 eyre = "0.6.12"
 futures = "0.3.31"
 color-eyre = "0.6.3"
-twitch-irc = "5.0.1"
+twitch-irc = { version = "5.0.1", features = [
+    "transport-ws-native-tls",
+    "refreshing-token-native-tls",
+] }
 clap = { version = "4.5.27", features = [
     "derive",
     "env",
@@ -33,6 +36,16 @@ clap = { version = "4.5.27", features = [
 clap_config = "0.1.1"
 dirs = "6.0.0"
 tracing-error = "0.2.1"
+async-trait = "0.1.86"
+chrono = "0.4.39"
+open = "5.3.2"
+serde_urlencoded = "0.7.1"
+httparse = "1.10.0"
+url = "2.5.4"
+oauth2 = { version = "5.0.0", default-features = false, features = [
+    "native-tls",
+    "reqwest",
+] }
 
 [profile.release]
 codegen-units = 1

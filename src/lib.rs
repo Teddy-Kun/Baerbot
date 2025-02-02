@@ -3,6 +3,8 @@ use color_eyre::eyre::Result;
 use twitch_api::HelixClient;
 use twitch_oauth2::{AccessToken, UserToken};
 
+pub mod auth;
+pub mod chat;
 pub mod cli;
 
 pub async fn init() -> Result<()> {
