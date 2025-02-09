@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
 
 	print_channel_info(client.as_ref(), conf.username.as_ref(), &token).await?;
 
-	chat::chat(&token).await?;
+	chat::chat(&token, conf.simple_response.clone()).await?;
 
 	Ok(())
 }

@@ -8,8 +8,10 @@ use twitch_irc::{
 };
 use twitch_oauth2::UserToken;
 
+use crate::cli::SimpleResponse;
+
 // Example from docs
-pub async fn chat(token: &UserToken) -> Result<()> {
+pub async fn chat(token: &UserToken, responses: Arc<[SimpleResponse]>) -> Result<()> {
 	let token = Arc::from(token.clone());
 	let login_name = token.login.as_str().to_owned();
 	let oauth_token = token.access_token.as_str().to_owned();
@@ -23,10 +25,17 @@ pub async fn chat(token: &UserToken) -> Result<()> {
 		TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(client_config);
 	let client = Arc::from(client);
 	let thread_client = client.clone();
+	let threaded_responses = responses.clone();
 	let join_handle = tokio::spawn(async move {
 		let channel: Arc<str> = Arc::from(token.login.as_str());
 		while let Some(message) = incoming_messages.recv().await {
-			handle_msg(thread_client.as_ref(), channel.to_string(), message).await
+			handle_msg(
+				thread_client.as_ref(),
+				channel.to_string(),
+				message,
+				threaded_responses.clone().as_ref(),
+			)
+			.await
 		}
 	});
 
@@ -43,6 +52,7 @@ async fn handle_msg(
 	client: &TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>,
 	channel: String,
 	message: ServerMessage,
+	responses: &[SimpleResponse],
 ) {
 	info!("Received message: {:?}", message.source());
 	if message.source().params.len() == 2 {
@@ -51,19 +61,47 @@ async fn handle_msg(
 			return;
 		}
 
-		let msg = message.source().params[1].clone().into_boxed_str();
-		if msg.get(0..1) != Some("!") {
+		let (first, command) = message.source().params[1].split_at(1);
+
+		if first != "!" {
 			return;
 		}
-		info!("Received command from {}: {}", name, msg);
+
+		let command = command.trim();
+
+		let mut response: Option<String> = None;
+
+		for res in responses {
+			debug!(
+				"checking msg '{:02x?}' for '{:02x?}'",
+				command.as_bytes(),
+				res.trigger.as_bytes()
+			);
+			if command == res.trigger.as_ref() {
+				debug!("check success");
+				response = Some(res.response.to_string());
+			} else {
+				let cmd = command.as_bytes();
+				let last_index = cmd.len();
+				if cmd[last_index - 4..last_index] == [0xf3, 0xa0, 0x80, 0x80] {
+					// No I do not know why twitch does this sometimes
+					debug!("secondary check success");
+					response = Some(res.response.to_string());
+				}
+			}
+		}
+
+		debug!("{:?}", &response);
+
+		info!("Received command from {}: {}", name, command);
+
+		if response.is_none() {
+			response =
+				Some(format!("Received unknown command from {}: {}", name, command).to_string());
+		}
+
 		// TODO: handle result
-		if let Err(e) = client
-			.say(
-				channel.clone(),
-				format!("Received command from {}: {}", name, msg),
-			)
-			.await
-		{
+		if let Err(e) = client.say(channel.clone(), response.unwrap()).await {
 			warn!("Error sending message: {:?}", e);
 		}
 	}

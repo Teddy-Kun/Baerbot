@@ -6,7 +6,13 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::warn;
 
-#[derive(ClapConfig, Clone, Parser, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SimpleResponse {
+	pub trigger: Arc<str>,
+	pub response: Arc<str>,
+}
+
+#[derive(ClapConfig, Clone, Debug, Parser, Deserialize, Serialize)]
 #[command(version, about, long_about = None)]
 struct Args {
 	#[arg(short, long, env, help = "Your Twitch username")]
@@ -23,11 +29,27 @@ struct Args {
 	pub config: Option<Arc<str>>,
 }
 
+impl From<Args> for ArgsConfig {
+	fn from(args: Args) -> Self {
+		ArgsConfig {
+			config: args.config.clone(),
+			token_file: args.token_file.clone(),
+			username: args.username.clone(),
+		}
+	}
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+struct CfgFile {
+	pub args: Option<Args>,
+	pub simple_responses: Arc<[SimpleResponse]>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
 	pub username: Arc<str>,
-
 	pub token_file: Option<Arc<str>>,
+	pub simple_response: Arc<[SimpleResponse]>,
 }
 
 impl Config {
@@ -51,7 +73,7 @@ impl Config {
 			},
 		};
 
-		let config = match config_path {
+		let config: Option<CfgFile> = match config_path {
 			None => None,
 			Some(config_path) => match std::fs::read_to_string(config_path.as_ref()) {
 				Ok(config_str) => Some(toml::from_str(&config_str)?),
@@ -64,11 +86,22 @@ impl Config {
 			},
 		};
 
-		let args = Args::from_merged(matches, config);
+		let cfg_args: Option<ArgsConfig> = match config.clone() {
+			None => None,
+			Some(c) => c.args.map(|a| a.into()),
+		};
+
+		let args = Args::from_merged(matches, cfg_args);
+
+		let simple_response = match config {
+			None => Arc::from([]),
+			Some(c) => c.simple_responses,
+		};
 
 		let config = Config {
 			username: args.username.ok_or(eyre!("Missing Username"))?,
 			token_file: args.token_file,
+			simple_response,
 		};
 
 		Ok(config)
