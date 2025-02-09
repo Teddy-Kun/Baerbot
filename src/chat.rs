@@ -75,6 +75,8 @@ async fn handle_msg(
 
 		let command = command.trim();
 
+		info!("Received command from {}: {}", name, command);
+
 		let mut response: Option<String> = None;
 
 		for res in responses {
@@ -97,16 +99,11 @@ async fn handle_msg(
 			}
 		}
 
-		debug!("{:?}", &response);
-
-		info!("Received command from {}: {}", name, command);
-
 		if response.is_none() {
 			response =
 				Some(format!("Received unknown command from {}: {}", name, command).to_string());
 		}
 
-		// TODO: handle result
 		if let Err(e) = client.say(channel.clone(), response.unwrap()).await {
 			warn!("Error sending message: {:?}", e);
 		}

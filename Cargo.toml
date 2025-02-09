@@ -44,6 +44,7 @@ keyring-lib = { version = "1.0.2", default-features = false, features = [
     "openssl",
 ] }
 secret-service = { version = "4.0.0", features = ["rt-tokio-crypto-openssl"] }
+openssl = { version = "0.10", features = ["vendored"] }
 
 [profile.release]
 codegen-units = 1
