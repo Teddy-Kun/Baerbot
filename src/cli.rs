@@ -12,6 +12,13 @@ struct Args {
 	#[arg(short, long, env, help = "Your Twitch username")]
 	pub username: Option<Arc<str>>,
 
+	#[arg(
+		long,
+		env,
+		help = "Will use this file for storing key data, instead of the OS keyring"
+	)]
+	pub token_file: Option<Arc<str>>,
+
 	#[arg(long, env, help = "Path to the config file")]
 	pub config: Option<Arc<str>>,
 }
@@ -19,6 +26,8 @@ struct Args {
 #[derive(Debug, Clone)]
 pub struct Config {
 	pub username: Arc<str>,
+
+	pub token_file: Option<Arc<str>>,
 }
 
 impl Config {
@@ -59,6 +68,7 @@ impl Config {
 
 		let config = Config {
 			username: args.username.ok_or(eyre!("Missing Username"))?,
+			token_file: args.token_file,
 		};
 
 		Ok(config)

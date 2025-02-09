@@ -1,25 +1,17 @@
-use std::time::Duration;
+use std::{
+	fs::{self, File},
+	io::Write,
+};
 
+use crate::{cli::Config, TwitchClient};
 use eyre::Result;
+use keyring::KeyringEntry;
 use tokio::time::sleep;
-use tracing::{debug, error, info};
+use tracing::{debug, info, warn};
 use twitch_api::HelixClient;
-use twitch_oauth2::{ClientId, DeviceUserTokenBuilder, Scope, UserToken};
+use twitch_oauth2::{AccessToken, ClientId, DeviceUserTokenBuilder, Scope, UserToken};
 
-async fn wait_for_code(dur: Duration, url: &str) {
-	debug!("Got duration: {:#?}", dur);
-
-	let handle = open::that_in_background(url).join();
-
-	if let Err(e) = handle {
-		error!("Failed to open browser: {:#?}", e);
-	}
-
-	// usually its 5 seconds, which I find too short
-	sleep(dur).await;
-}
-
-pub async fn twitch_auth() -> Result<UserToken> {
+pub async fn twitch_auth(conf: &Config) -> Result<UserToken> {
 	let client_id = ClientId::new("15xr4zw5ue7jxpbvt0jwwrwywqch9a".to_string());
 	let scopes = vec![Scope::ChatEdit, Scope::ChatRead];
 
@@ -31,12 +23,53 @@ pub async fn twitch_auth() -> Result<UserToken> {
 	debug!("code: {:#?}", code);
 
 	let url = code.verification_uri.clone();
+	open::that(url)?;
 
-	let token = builder
-		.wait_for_code(&client, |dur: Duration| wait_for_code(dur, &url))
-		.await?;
+	let token = builder.wait_for_code(&client, sleep).await?;
 
 	info!("Got token: {:#?}", token);
+
+	if let Err(e) = save_token(&token, conf).await {
+		warn!("Failed to save token: {:#?}", e);
+
+		// Panic until I figure out why its broken
+		panic!("Failed to save token: {:#?}", e);
+	};
+
+	Ok(token)
+}
+
+async fn save_token(token: &UserToken, conf: &Config) -> Result<()> {
+	if let Some(file) = conf.token_file.clone() {
+		let mut f = File::create(file.as_ref())?;
+		f.write(token.access_token.as_str().as_bytes())?;
+		return Ok(());
+	}
+
+	// TODO: figure out why this dies on Linux, KDE issue?
+
+	let entry = KeyringEntry::try_new("access_token")?;
+	entry.set_secret(token.access_token.as_str()).await?;
+
+	Ok(())
+}
+
+pub async fn load_token(client: &TwitchClient, conf: &Config) -> Result<UserToken> {
+	if let Some(file) = conf.token_file.clone() {
+		let token_str = fs::read_to_string(file.as_ref())?;
+
+		return Ok(UserToken::from_token(client, AccessToken::new(token_str)).await?);
+	}
+
+	// TODO: figure out why this dies on Linux, KDE issue?
+
+	let entry = KeyringEntry::try_new("access_token")?;
+	let access_token = entry.get_secret().await?;
+	info!("access_token: {:#?}", access_token);
+
+	let access_token = AccessToken::new(access_token);
+
+	let token = UserToken::from_token(client, access_token).await?;
 
 	Ok(token)
 }

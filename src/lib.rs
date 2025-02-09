@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use color_eyre::eyre::Result;
 use tracing::{debug, info};
 use twitch_api::HelixClient;
@@ -7,9 +9,17 @@ pub mod auth;
 pub mod chat;
 pub mod cli;
 
-pub async fn print_channel_info(username: &str, token: &UserToken) -> Result<()> {
-	let client: HelixClient<reqwest::Client> = HelixClient::default();
+pub type TwitchClient = HelixClient<'static, reqwest::Client>;
 
+pub fn new_client() -> Arc<TwitchClient> {
+	Arc::new(HelixClient::default())
+}
+
+pub async fn print_channel_info(
+	client: &TwitchClient,
+	username: &str,
+	token: &UserToken,
+) -> Result<()> {
 	debug!("token user: {:#?}", token.user_id);
 
 	info!(

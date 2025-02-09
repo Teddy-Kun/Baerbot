@@ -1,3 +1,4 @@
 /target
 .env
 tedbot.toml
+token.txt
