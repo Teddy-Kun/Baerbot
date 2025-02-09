@@ -9,6 +9,8 @@ pub mod auth;
 pub mod chat;
 pub mod cli;
 
+pub const BOT_NAME: &str = "Tedbot";
+
 pub type TwitchClient = HelixClient<'static, reqwest::Client>;
 
 pub fn new_client() -> Arc<TwitchClient> {

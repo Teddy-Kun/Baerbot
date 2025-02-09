@@ -4,7 +4,7 @@ use tedbot::{
 	auth::{self, load_token},
 	chat,
 	cli::Config,
-	install_tracing, new_client, print_channel_info,
+	install_tracing, new_client, print_channel_info, BOT_NAME,
 };
 use tracing::debug;
 
@@ -13,7 +13,7 @@ async fn main() -> Result<()> {
 	install_tracing();
 	color_eyre::install()?;
 
-	set_global_service_name("plushbot");
+	set_global_service_name(BOT_NAME);
 
 	let conf = Config::get()?;
 

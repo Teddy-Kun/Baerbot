@@ -1,18 +1,17 @@
-use std::sync::Arc;
-
+use crate::{cli::SimpleResponse, BOT_NAME};
 use eyre::Result;
-use tracing::{debug, info, warn};
+use std::{process, str, sync::Arc};
+use tracing::{debug, error, info, warn};
 use twitch_irc::{
 	login::StaticLoginCredentials, message::ServerMessage, ClientConfig, SecureTCPTransport,
 	TwitchIRCClient,
 };
 use twitch_oauth2::UserToken;
 
-use crate::cli::SimpleResponse;
-
 // Example from docs
 pub async fn chat(token: &UserToken, responses: Arc<[SimpleResponse]>) -> Result<()> {
 	let token = Arc::from(token.clone());
+	let channel = token.login.as_str().to_string();
 	let login_name = token.login.as_str().to_owned();
 	let oauth_token = token.access_token.as_str().to_owned();
 
@@ -40,6 +39,13 @@ pub async fn chat(token: &UserToken, responses: Arc<[SimpleResponse]>) -> Result
 	});
 
 	client.join(login_name)?;
+	if let Err(e) = client
+		.say(channel, format!("{} initialized! 🧸", BOT_NAME).to_string())
+		.await
+	{
+		error!("Error sending initial message: {:?}\nExiting", e);
+		process::exit(1);
+	};
 	debug!("after join");
 
 	// keep the tokio executor alive.
@@ -72,20 +78,20 @@ async fn handle_msg(
 		let mut response: Option<String> = None;
 
 		for res in responses {
-			debug!(
-				"checking msg '{:02x?}' for '{:02x?}'",
-				command.as_bytes(),
-				res.trigger.as_bytes()
-			);
 			if command == res.trigger.as_ref() {
-				debug!("check success");
 				response = Some(res.response.to_string());
 			} else {
+				// workaround for twitch being big dumb dumb
 				let cmd = command.as_bytes();
 				let last_index = cmd.len();
-				if cmd[last_index - 4..last_index] == [0xf3, 0xa0, 0x80, 0x80] {
+
+				let (command, end) = cmd.split_at(last_index - 4);
+
+				let command = unsafe { str::from_boxed_utf8_unchecked(command.into()) };
+				let command = command.trim();
+
+				if end == [0xf3, 0xa0, 0x80, 0x80] && command == res.trigger.as_ref() {
 					// No I do not know why twitch does this sometimes
-					debug!("secondary check success");
 					response = Some(res.response.to_string());
 				}
 			}
