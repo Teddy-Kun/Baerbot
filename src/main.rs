@@ -23,15 +23,13 @@ async fn main() -> Result<()> {
 		Ok(token) => token,
 		Err(_) => {
 			debug!("Failed to load token, authenticating");
-			let token = auth::twitch_auth(&conf).await?;
-
-			token
+			auth::twitch_auth(&conf).await?
 		}
 	};
 
 	print_channel_info(client.as_ref(), conf.username.as_ref(), &token).await?;
 
-	chat::chat(token).await?;
+	chat::chat(&token).await?;
 
 	Ok(())
 }
