@@ -6,7 +6,7 @@ use std::{
 	io::Write,
 };
 use tokio::time::sleep;
-use tracing::{debug, info, warn};
+use tracing::{debug, warn};
 use twitch_api::HelixClient;
 use twitch_oauth2::{AccessToken, ClientId, DeviceUserTokenBuilder, Scope, UserToken};
 
