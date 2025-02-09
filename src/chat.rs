@@ -3,13 +3,20 @@ use tracing::info;
 use twitch_irc::{
 	login::StaticLoginCredentials, ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
+use twitch_oauth2::UserToken;
 
 // Example from docs
-pub async fn chat() -> Result<()> {
-	let config = ClientConfig::default();
+pub async fn chat(token: UserToken) -> Result<()> {
+	let login_name = token.login.as_str().to_owned();
+	let oauth_token = token.access_token.as_str().to_owned();
+
+	let client_config = ClientConfig::new_simple(StaticLoginCredentials::new(
+		login_name.clone(),
+		Some(oauth_token),
+	));
 
 	let (mut incoming_messages, client) =
-		TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(config);
+		TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(client_config);
 
 	let join_handle = tokio::spawn(async move {
 		while let Some(message) = incoming_messages.recv().await {
@@ -17,11 +24,7 @@ pub async fn chat() -> Result<()> {
 		}
 	});
 
-	// join a channel
-	// This function only returns an error if the passed channel login name is malformed,
-	// so in this simple case where the channel name is hardcoded we can ignore the potential
-	// error with `unwrap`.
-	client.join("teddy_kun".to_owned())?;
+	client.join(login_name)?;
 
 	// keep the tokio executor alive.
 	// If you return instead of waiting the background task will exit.

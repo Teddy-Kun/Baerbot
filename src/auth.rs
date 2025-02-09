@@ -42,7 +42,7 @@ pub async fn twitch_auth(conf: &Config) -> Result<UserToken> {
 async fn save_token(token: &UserToken, conf: &Config) -> Result<()> {
 	if let Some(file) = conf.token_file.clone() {
 		let mut f = File::create(file.as_ref())?;
-		f.write(token.access_token.as_str().as_bytes())?;
+		f.write_all(token.access_token.as_str().as_bytes())?;
 		return Ok(());
 	}
 

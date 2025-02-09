@@ -31,9 +31,7 @@ async fn main() -> Result<()> {
 
 	print_channel_info(client.as_ref(), conf.username.as_ref(), &token).await?;
 
-	todo!("Use Token {:#?}", &token);
-
-	chat::chat().await?;
+	chat::chat(token).await?;
 
 	Ok(())
 }
