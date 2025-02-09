@@ -1,6 +1,5 @@
-use std::sync::Arc;
-
 use color_eyre::eyre::Result;
+use std::sync::Arc;
 use tracing::{debug, info};
 use twitch_api::HelixClient;
 use twitch_oauth2::UserToken;

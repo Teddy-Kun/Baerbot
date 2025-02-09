@@ -1,11 +1,10 @@
+use crate::{cli::Config, TwitchClient};
+use eyre::Result;
+use keyring::KeyringEntry;
 use std::{
 	fs::{self, File},
 	io::Write,
 };
-
-use crate::{cli::Config, TwitchClient};
-use eyre::Result;
-use keyring::KeyringEntry;
 use tokio::time::sleep;
 use tracing::{debug, info, warn};
 use twitch_api::HelixClient;
