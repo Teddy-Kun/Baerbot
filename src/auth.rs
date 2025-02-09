@@ -26,8 +26,6 @@ pub async fn twitch_auth(conf: &Config) -> Result<UserToken> {
 
 	let token = builder.wait_for_code(&client, sleep).await?;
 
-	info!("Got token: {:#?}", token);
-
 	if let Err(e) = save_token(&token, conf).await {
 		warn!("Failed to save token: {:#?}", e);
 
@@ -64,8 +62,6 @@ pub async fn load_token(client: &TwitchClient, conf: &Config) -> Result<UserToke
 
 	let entry = KeyringEntry::try_new("access_token")?;
 	let access_token = entry.get_secret().await?;
-	info!("access_token: {:#?}", access_token);
-
 	let access_token = AccessToken::new(access_token);
 
 	let token = UserToken::from_token(client, access_token).await?;
