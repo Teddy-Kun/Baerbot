@@ -42,14 +42,18 @@ impl From<Args> for ArgsConfig {
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 struct CfgFile {
 	pub args: Option<Args>,
-	pub simple_responses: Arc<[SimpleResponse]>,
+	pub counters: Option<Arc<[Arc<str>]>>,
+	pub simple_responses: Option<Arc<[SimpleResponse]>>,
+	pub tts_chance: Option<f64>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Config {
 	pub username: Arc<str>,
 	pub token_file: Option<Arc<str>>,
+	pub counters: Arc<[Arc<str>]>,
 	pub simple_response: Arc<[SimpleResponse]>,
+	pub tts_chance: f64,
 }
 
 impl Config {
@@ -93,15 +97,27 @@ impl Config {
 
 		let args = Args::from_merged(matches, cfg_args);
 
+		let tts_chance = match &config {
+			None => 0.0,
+			Some(c) => c.tts_chance.unwrap_or(0.0),
+		};
+
+		let counters = match &config {
+			None => Arc::from([]),
+			Some(c) => c.counters.clone().unwrap_or(Arc::from([])),
+		};
+
 		let simple_response = match config {
 			None => Arc::from([]),
-			Some(c) => c.simple_responses,
+			Some(c) => c.simple_responses.unwrap_or(Arc::from([])),
 		};
 
 		let config = Config {
 			username: args.username.ok_or(eyre!("Missing Username"))?,
 			token_file: args.token_file,
 			simple_response,
+			tts_chance,
+			counters,
 		};
 
 		Ok(config)

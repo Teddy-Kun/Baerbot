@@ -1,10 +1,13 @@
 use color_eyre::eyre::Result;
 use keyring::set_global_service_name;
+use std::sync::Arc;
 use tedbot::{
 	auth::{self, load_token},
 	chat,
 	cli::Config,
-	install_tracing, new_client, print_channel_info, BOT_NAME,
+	install_tracing, new_client, print_channel_info,
+	tts::setup_tts,
+	BOT_NAME,
 };
 use tracing::debug;
 
@@ -15,7 +18,7 @@ async fn main() -> Result<()> {
 
 	set_global_service_name(BOT_NAME);
 
-	let conf = Config::get()?;
+	let conf = Arc::new(Config::get()?);
 
 	let client = new_client();
 
@@ -29,7 +32,16 @@ async fn main() -> Result<()> {
 
 	print_channel_info(client.as_ref(), conf.username.as_ref(), &token).await?;
 
-	chat::chat(&token, conf.simple_response.clone()).await?;
+	let conf_clone = conf.clone();
+	let join_handle = tokio::task::spawn_blocking(move || {
+		if conf_clone.tts_chance > 0.0 {
+			setup_tts();
+		}
+	});
+
+	chat::chat(&token, conf.clone()).await?;
+
+	join_handle.await?;
 
 	Ok(())
 }

@@ -1,4 +1,4 @@
-use crate::{cli::SimpleResponse, BOT_NAME};
+use crate::{cli::Config, counter, BOT_NAME};
 use eyre::Result;
 use std::{process, str, sync::Arc};
 use tracing::{debug, error, info, warn};
@@ -9,7 +9,7 @@ use twitch_irc::{
 use twitch_oauth2::UserToken;
 
 // Example from docs
-pub async fn chat(token: &UserToken, responses: Arc<[SimpleResponse]>) -> Result<()> {
+pub async fn chat(token: &UserToken, config: Arc<Config>) -> Result<()> {
 	let token = Arc::from(token.clone());
 	let channel = token.login.as_str().to_string();
 	let login_name = token.login.as_str().to_owned();
@@ -24,7 +24,7 @@ pub async fn chat(token: &UserToken, responses: Arc<[SimpleResponse]>) -> Result
 		TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(client_config);
 	let client = Arc::from(client);
 	let thread_client = client.clone();
-	let threaded_responses = responses.clone();
+	let thread_config = config.clone();
 	let join_handle = tokio::spawn(async move {
 		let channel: Arc<str> = Arc::from(token.login.as_str());
 		while let Some(message) = incoming_messages.recv().await {
@@ -32,7 +32,7 @@ pub async fn chat(token: &UserToken, responses: Arc<[SimpleResponse]>) -> Result
 				thread_client.as_ref(),
 				channel.to_string(),
 				message,
-				threaded_responses.clone().as_ref(),
+				thread_config.as_ref(),
 			)
 			.await
 		}
@@ -58,54 +58,139 @@ async fn handle_msg(
 	client: &TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>,
 	channel: String,
 	message: ServerMessage,
-	responses: &[SimpleResponse],
+	config: &Config,
 ) {
 	info!("Received message: {:?}", message.source());
-	if message.source().params.len() == 2 {
-		let (first, name) = message.source().params[0].split_at(1);
-		if (first) != "#" {
-			return;
-		}
 
-		let (first, command) = message.source().params[1].split_at(1);
+	let mut msg_len = message.source().params.len();
 
-		if first != "!" {
-			return;
-		}
+	if msg_len < 2 {
+		return;
+	}
 
-		let command = command.trim();
+	let (first, name) = message.source().params[0].split_at(1);
+	if (first) != "#" {
+		return;
+	}
 
-		info!("Received command from {}: {}", name, command);
+	let (first, command) = message.source().params[1].split_at(1);
 
-		let mut response: Option<String> = None;
+	if first != "!" {
+		return;
+	}
 
-		for res in responses {
-			if command == res.trigger.as_ref() {
-				response = Some(res.response.to_string());
-			} else {
-				// workaround for twitch being big dumb dumb
-				let cmd = command.as_bytes();
-				let last_index = cmd.len();
+	let command = command.trim();
 
-				let (command, end) = cmd.split_at(last_index - 4);
+	info!("Received command from {}: {}", name, command);
 
-				let command = unsafe { str::from_boxed_utf8_unchecked(command.into()) };
-				let command = command.trim();
+	let splitted: Box<[&str]> = command.split_ascii_whitespace().collect();
+	msg_len = splitted.len();
 
-				if end == [0xf3, 0xa0, 0x80, 0x80] && command == res.trigger.as_ref() {
-					// No I do not know why twitch does this sometimes
-					response = Some(res.response.to_string());
+	let mut response: Option<String> = None;
+
+	match msg_len {
+		1 => response = get_response(command, config),
+		2 => {
+			let command = splitted[0];
+			match handle_counters(command.into(), splitted[1].into(), None, config).await {
+				Ok(res) => response = Some(res),
+				Err(e) => {
+					if let Some(e) = e {
+						response = Some(e);
+					}
 				}
-			}
+			};
 		}
-
-		if response.is_none() {
-			response =
-				Some(format!("Received unknown command from {}: {}", name, command).to_string());
+		3 => {
+			let command = splitted[0];
+			match handle_counters(
+				command.into(),
+				splitted[1].into(),
+				Some(splitted[2].into()),
+				config,
+			)
+			.await
+			{
+				Ok(res) => response = Some(res),
+				Err(e) => {
+					if let Some(e) = e {
+						response = Some(e);
+					}
+				}
+			};
 		}
+		_ => {
+			// TODO: error msg
+			return;
+		}
+	}
 
-		if let Err(e) = client.say(channel.clone(), response.unwrap()).await {
+	if let Some(response) = response {
+		if let Err(e) = client.say(channel.clone(), response).await {
 			warn!("Error sending message: {:?}", e);
 		}
 	}
+}
+
+fn get_response(command: &str, config: &Config) -> Option<String> {
+	let mut command: Box<str> = Box::from(command);
+	// workaround for twitch being big dumb dumb
+	let cmd = command.as_bytes();
+	let last_index = cmd.len();
+
+	let (cmd, end) = cmd.split_at(last_index - 4);
+
+	if end == [0xf3, 0xa0, 0x80, 0x80] {
+		command = unsafe { str::from_boxed_utf8_unchecked(cmd.into()) };
+	}
+
+	if command.as_ref() == "tts" {
+		// TODO: global tts queue
+		return None;
+	}
+
+	for res in config.simple_response.iter() {
+		if command.as_ref() == res.trigger.as_ref() {
+			return Some(res.response.to_string());
+		}
+	}
+
+	None
+}
+
+// if this return `Ok` it means the counter updated
+// if it returns an empty Err it means the counter does not exist
+// if it returns a filled Err it means the counter does exist but something went wrong
+async fn handle_counters(
+	counter: Arc<str>,
+	command: Arc<str>,
+	value: Option<Arc<str>>,
+	config: &Config,
+) -> Result<String, Option<String>> {
+	if !config.counters.contains(&counter) {
+		return Err(None);
+	}
+
+	let res: isize = match command.to_lowercase().as_str() {
+		"set" => {
+			let value = match value {
+				None => return Err(Some(String::from("No value provided"))),
+				Some(value) => match value.parse::<isize>() {
+					Err(_) => return Err(Some(String::from("Value is not a number"))),
+					Ok(v) => v,
+				},
+			};
+			counter::set(counter.clone(), value).await;
+
+			value
+		}
+		"get" => counter::get(counter.clone()).await,
+		"inc" => counter::increase(counter.clone()).await,
+		"dec" => counter::decrease(counter.clone()).await,
+		_ => {
+			return Err(Some(String::from("Invalid counter action")));
+		}
+	};
+
+	return Ok(format!("{counter} is now {res}"));
 }

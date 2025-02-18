@@ -7,6 +7,8 @@ use twitch_oauth2::UserToken;
 pub mod auth;
 pub mod chat;
 pub mod cli;
+pub mod counter;
+pub mod tts;
 
 pub const BOT_NAME: &str = "Tedbot";
 
