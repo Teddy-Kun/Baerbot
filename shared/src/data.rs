@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use specta::Type;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Type)]
 pub struct SimpleResponse {
-	pub trigger: Arc<str>,
-	pub response: Arc<str>,
+	pub trigger: String,
+	pub response: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Type)]
 pub struct TimedShoutout {
 	pub seconds: u16,
-	pub message: Arc<str>,
+	pub message: String,
 }

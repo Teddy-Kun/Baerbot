@@ -18,3 +18,4 @@ eyre = { version = "0.6.12", default-features = false, features = [
 ] }
 dirs = "6.0.0"
 toml = "0.8.20"
+specta = "=2.0.0-rc.22"

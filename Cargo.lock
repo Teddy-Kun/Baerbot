@@ -4792,6 +4792,7 @@ dependencies = [
  "dirs",
  "eyre",
  "serde",
+ "specta",
  "toml",
 ]
 
@@ -5550,6 +5551,8 @@ dependencies = [
  "rodio",
  "secret-service 5.0.0",
  "shared",
+ "specta",
+ "tauri-specta",
  "tokio",
  "tokio-tungstenite",
  "tracing",
@@ -5566,6 +5569,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "shared",
  "specta",
  "specta-typescript",
  "tauri",

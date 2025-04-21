@@ -7,6 +7,9 @@
 export const commands = {
 async greet(name: string) : Promise<string> {
     return await TAURI_INVOKE("greet", { name });
+},
+async test() : Promise<SimpleResponse> {
+    return await TAURI_INVOKE("test");
 }
 }
 
@@ -20,7 +23,7 @@ async greet(name: string) : Promise<string> {
 
 /** user-defined types **/
 
-
+export type SimpleResponse = { trigger: string; response: string }
 
 /** tauri-specta globals **/
 

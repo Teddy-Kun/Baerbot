@@ -41,6 +41,8 @@ openssl = { version = "0.10", features = ["vendored"] }
 lazy_static = "1.5.0"
 piper-rs = "0.1.9"
 rodio = { version = "0.20.1", features = ["tracing"] }
+specta = "=2.0.0-rc.22"
+tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 shared = { path = "../shared" }
 
 [profile.release]

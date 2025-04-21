@@ -8,9 +8,18 @@ fn greet(name: &str) -> String {
 	format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[tauri::command]
+#[specta::specta]
+fn test() -> shared::data::SimpleResponse {
+	shared::data::SimpleResponse {
+		trigger: "test".to_string(),
+		response: "test".to_string(),
+	}
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-	let ts_builder = Builder::<tauri::Wry>::new().commands(collect_commands![greet]);
+	let ts_builder = Builder::<tauri::Wry>::new().commands(collect_commands![greet, test]);
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
 		ts_builder
 			.export(Typescript::default(), "../src/bindings.ts")

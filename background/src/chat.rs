@@ -151,7 +151,7 @@ fn get_response(command: &str, config: &Config) -> Option<String> {
 	}
 
 	for res in config.simple_responses.iter() {
-		if command.as_ref() == res.trigger.as_ref() {
+		if command.as_ref() == res.trigger {
 			return Some(res.response.to_string());
 		}
 	}
