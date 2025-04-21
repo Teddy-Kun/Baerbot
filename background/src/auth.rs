@@ -1,6 +1,7 @@
-use crate::{cli::Config, TwitchClient};
+use crate::TwitchClient;
 use eyre::Result;
 use keyring::KeyringEntry;
+use shared::cfg::Config;
 use std::{
 	fs::{self, File},
 	io::Write,
@@ -37,7 +38,7 @@ pub async fn twitch_auth(conf: &Config) -> Result<UserToken> {
 }
 
 async fn save_token(token: &UserToken, conf: &Config) -> Result<()> {
-	if let Some(file) = conf.token_file.clone() {
+	if let Some(file) = conf.get_token_file() {
 		let mut f = File::create(file.as_ref())?;
 		f.write_all(token.access_token.as_str().as_bytes())?;
 		return Ok(());
@@ -52,7 +53,7 @@ async fn save_token(token: &UserToken, conf: &Config) -> Result<()> {
 }
 
 pub async fn load_token(client: &TwitchClient, conf: &Config) -> Result<UserToken> {
-	if let Some(file) = conf.token_file.clone() {
+	if let Some(file) = conf.get_token_file() {
 		let token_str = fs::read_to_string(file.as_ref())?;
 
 		return Ok(UserToken::from_token(client, AccessToken::new(token_str)).await?);

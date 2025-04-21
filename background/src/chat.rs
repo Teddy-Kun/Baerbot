@@ -1,10 +1,11 @@
-use crate::{cli::Config, counter, BOT_NAME};
+use crate::{BOT_NAME, counter};
 use eyre::Result;
+use shared::cfg::Config;
 use std::{process, str, sync::Arc};
 use tracing::{debug, error, info, warn};
 use twitch_irc::{
-	login::StaticLoginCredentials, message::ServerMessage, ClientConfig, SecureTCPTransport,
-	TwitchIRCClient,
+	ClientConfig, SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials,
+	message::ServerMessage,
 };
 use twitch_oauth2::UserToken;
 
@@ -149,7 +150,7 @@ fn get_response(command: &str, config: &Config) -> Option<String> {
 		return None;
 	}
 
-	for res in config.simple_response.iter() {
+	for res in config.simple_responses.iter() {
 		if command.as_ref() == res.trigger.as_ref() {
 			return Some(res.response.to_string());
 		}

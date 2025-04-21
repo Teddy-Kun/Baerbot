@@ -1,4 +1,4 @@
-use eyre::{eyre, Result};
+use eyre::{Result, eyre};
 use piper_rs::synth::PiperSpeechSynthesizer;
 use rodio::buffer::SamplesBuffer;
 use std::{

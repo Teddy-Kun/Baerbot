@@ -6,7 +6,6 @@ use twitch_oauth2::UserToken;
 
 pub mod auth;
 pub mod chat;
-pub mod cli;
 pub mod counter;
 pub mod tts;
 
@@ -36,7 +35,7 @@ pub async fn print_channel_info(
 pub fn install_tracing() {
 	use tracing_error::ErrorLayer;
 	use tracing_subscriber::prelude::*;
-	use tracing_subscriber::{fmt, EnvFilter};
+	use tracing_subscriber::{EnvFilter, fmt};
 
 	let fmt_layer = fmt::layer().with_target(false);
 	let filter_layer = EnvFilter::try_from_default_env()
