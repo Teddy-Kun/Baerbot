@@ -3,6 +3,7 @@
 	import { commands } from "@/bindings";
 	import { toast } from "svelte-sonner";
 	import { Input } from "@/lib/components/ui/input";
+	import store from "@/store.svelte";
 
 	let name = $state("");
 
@@ -13,7 +14,7 @@
 	}
 </script>
 
-<h1>Welcome to Tauri + Svelte</h1>
+<h1>Current Tab: {store.currentTab}</h1>
 <form onsubmit={greet}>
 	<Input
 		id="greet-input"

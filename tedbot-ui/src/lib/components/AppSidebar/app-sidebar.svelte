@@ -1,6 +1,5 @@
 <script lang="ts" module>
 	import BookOpen from "@lucide/svelte/icons/book-open";
-	import Bot from "@lucide/svelte/icons/bot";
 	import Settings2 from "@lucide/svelte/icons/settings-2";
 	import SquareTerminal from "@lucide/svelte/icons/square-terminal";
 
@@ -9,26 +8,18 @@
 		{
 			title: "Playground",
 			icon: SquareTerminal,
-			isActive: true,
-			switch: (): void => {toast("Playground");},
 		},
 		{
 			title: "Models",
-			url: "#",
-			icon: Bot,
-			switch: (): void => {toast("Models");},
+			icon: SquareTerminal,
 		},
 		{
 			title: "Documentation",
-			url: "#",
 			icon: BookOpen,
-			switch: (): void => {toast("Documentation");},
 		},
 		{
 			title: "Settings",
-			url: "#",
 			icon: Settings2,
-			switch: (): void => {toast("Settings");},
 		},
 	];
 </script>
@@ -39,7 +30,6 @@
 	import SidebarHeader from "@/lib/components/AppSidebar/sidebar-header.svelte";
 	import * as Sidebar from "@/lib/components/ui/sidebar/index.js";
 	import type { ComponentProps } from "svelte";
-	import { toast } from "svelte-sonner";
 
 	let {
 		ref = $bindable(null),

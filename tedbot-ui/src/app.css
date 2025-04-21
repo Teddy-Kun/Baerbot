@@ -1,4 +1,4 @@
-@import "./styles/plugins.css";
+@import "./styles/config.css";
 @plugin "@nobie-org/tailwindcss-animate";
 @import "tailwindcss";
 
