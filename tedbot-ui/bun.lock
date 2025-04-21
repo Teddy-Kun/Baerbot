@@ -4,13 +4,14 @@
     "": {
       "name": "tedbot-ui",
       "dependencies": {
-        "@nobie-org/tailwindcss-animate": "^1.0.9",
         "@tauri-apps/api": "^2.5.0",
         "@tauri-apps/plugin-opener": "^2.2.6",
         "lucide-svelte": "^0.503.0",
       },
       "devDependencies": {
         "@eslint/compat": "^1.2.8",
+        "@lucide/svelte": "^0.503.0",
+        "@nobie-org/tailwindcss-animate": "^1.0.9",
         "@stylistic/eslint-plugin-js": "^4.2.0",
         "@stylistic/eslint-plugin-ts": "^4.2.0",
         "@sveltejs/adapter-static": "^3.0.6",
@@ -134,6 +135,8 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.0", "", {}, "sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.25", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ=="],
+
+    "@lucide/svelte": ["@lucide/svelte@0.503.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-Y7Q8pHnX2YG8Ef4a/VnYFN9tTAJS33MiS78vQtPiyp5iiWuBlTMoViMiRUxQb7U9Ro46RdJ0kpCADvvha3Z2rA=="],
 
     "@nobie-org/tailwindcss-animate": ["@nobie-org/tailwindcss-animate@1.0.9", "", { "peerDependencies": { "tailwindcss": ">=3.0.0 || >=4.0.0-beta || insiders" } }, "sha512-2YpGjpgYRrRP1lVxWYJw7UFlVTHTjeD/yxZWoxE1dnTUhEzpFMRksiefW26ZFnWnOIgj2DI8xyk17PA+rkssBw=="],
 

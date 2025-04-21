@@ -19,8 +19,9 @@
     "lucide-svelte": "^0.503.0"
   },
   "devDependencies": {
-	"@nobie-org/tailwindcss-animate": "^1.0.9",
     "@eslint/compat": "^1.2.8",
+    "@lucide/svelte": "^0.503.0",
+    "@nobie-org/tailwindcss-animate": "^1.0.9",
     "@stylistic/eslint-plugin-js": "^4.2.0",
     "@stylistic/eslint-plugin-ts": "^4.2.0",
     "@sveltejs/adapter-static": "^3.0.6",

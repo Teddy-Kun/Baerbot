@@ -10,38 +10,37 @@ import stylisticTs from "@stylistic/eslint-plugin-ts";
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 
 export default ts.config(
-  includeIgnoreFile(gitignorePath),
-  js.configs.recommended,
-  ...ts.configs.recommended,
-  ...svelte.configs.recommended,
-  {
-    languageOptions: {
-	  globals: {
-	    ...globals.browser,
-	    ...globals.node
-	  }
-	}
-  },
-  {
-    files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
-    ignores: ["eslint.config.js", "svelte.config.js"],
-
-    languageOptions: {
-	  parserOptions: {
-	    projectService: true,
-	    extraFileExtensions: ['.svelte'],
-	    parser: ts.parser,
-	    svelteConfig
-	  }
+	includeIgnoreFile(gitignorePath),
+	js.configs.recommended,
+	...ts.configs.recommended,
+	...svelte.configs.recommended,
+	{
+		languageOptions: {
+			globals: {
+				...globals.browser,
+				...globals.node
+			}
+		}
 	},
+	{
+		files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
 
-    plugins: {
-        "@stylistic/js": stylisticJs,
-        "@stylistic/ts": stylisticTs,
-    },
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				extraFileExtensions: ['.svelte'],
+				parser: ts.parser,
+				svelteConfig
+			}
+		},
 
-    rules: {
-        "@stylistic/ts/indent": ["error", "tab"],
+		plugins: {
+			"@stylistic/js": stylisticJs,
+			"@stylistic/ts": stylisticTs,
+		},
+
+		rules: {
+			"@stylistic/ts/indent": ["error", "tab"],
 			"@stylistic/ts/semi": "error",
 			"@stylistic/ts/quotes": ["error", "double"],
 			"@stylistic/ts/space-before-blocks": "error",
@@ -69,6 +68,9 @@ export default ts.config(
 					indent: "tab",
 				},
 			],
-    }
-  }
+		}
+	},
+	{
+		ignores: ['**/*/bindings.ts']
+	}
 );
