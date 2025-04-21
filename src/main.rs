@@ -9,7 +9,7 @@ use tedbot::{
 	tts::setup_tts,
 	BOT_NAME,
 };
-use tracing::debug;
+use tracing::{debug, warn};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -35,7 +35,9 @@ async fn main() -> Result<()> {
 	let conf_clone = conf.clone();
 	let join_handle = tokio::task::spawn_blocking(move || {
 		if conf_clone.tts_chance > 0.0 {
-			setup_tts();
+			if let Err(e) = setup_tts() {
+				warn!("Failed to setup TTS: {:#?}", e);
+			}
 		}
 	});
 

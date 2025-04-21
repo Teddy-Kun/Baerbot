@@ -1,27 +1,126 @@
-use eyre::Result;
+use eyre::{eyre, Result};
 use piper_rs::synth::PiperSpeechSynthesizer;
 use rodio::buffer::SamplesBuffer;
-use std::path::Path;
+use std::{
+	fmt::Debug,
+	path::Path,
+	sync::{Arc, Mutex},
+	time::Duration,
+};
+use tokio::{task::JoinHandle, time::Instant};
+use tracing::warn;
 
-pub fn setup_tts() -> Result<()> {
-	const DBG_CFG: &str = "piper/en_US-amy-medium.onnx.json";
-	// H.P. Lovecraft The Unnameable
-	const DBG_TEXT: &str = "No—it wasn’t that way at all. It was everywhere—a gelatin—a slime—yet it had shapes, a thousand shapes of horror beyond all memory. There were eyes—and a blemish. It was the pit—the maelstrom—the ultimate abomination. Carter, it was the unnamable!";
-	let model = piper_rs::from_config_path(Path::new(DBG_CFG))?;
-	let synth = PiperSpeechSynthesizer::new(model)?;
+type CallbackHandle = Arc<Mutex<Option<JoinHandle<()>>>>;
+#[derive(Clone)]
+pub struct Tts<'a> {
+	synth: Arc<PiperSpeechSynthesizer>,
+	timeout: Option<u16>,
+	queue: Vec<&'a str>,
+	last_played: Option<Instant>,
+	callback_handle: CallbackHandle,
+}
 
-	let mut samples: Vec<f32> = Vec::new();
-	let audio = synth.synthesize_parallel(DBG_TEXT.into(), None).unwrap();
-	for result in audio {
-		samples.append(&mut result.unwrap().into_vec());
+impl<'a> Debug for Tts<'a> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(
+			f,
+			"Tts timeout: {:?}, last_played: {:?}, queue: {:?}",
+			self.timeout, self.last_played, self.queue
+		)
+	}
+}
+
+impl<'a> Tts<'a> {
+	pub fn new(model: &'a str, timeout: Option<u16>) -> Result<Self> {
+		let model = piper_rs::from_config_path(Path::new(model))?;
+		let synth = PiperSpeechSynthesizer::new(model)?;
+		Ok(Self {
+			synth: Arc::new(synth),
+			timeout,
+			queue: Vec::new(),
+			last_played: None,
+			callback_handle: Arc::new(Mutex::new(None)),
+		})
 	}
 
-	let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-	let sink = rodio::Sink::try_new(&handle).unwrap();
+	fn setup_callback(&mut self) -> Result<()> {
+		let handle_clone = self.callback_handle.clone();
+		let handle = handle_clone.lock().unwrap();
+		if handle.is_some() {
+			return Err(eyre!("Callback already running"));
+		}
 
-	let buf = SamplesBuffer::new(1, 22050, samples);
-	sink.append(buf);
+		if self.timeout.is_none() {
+			return Err(eyre!("No timeout is given"));
+		}
 
-	sink.sleep_until_end();
-	Ok(())
+		if self.last_played.is_none() {
+			return Err(eyre!("Nothing was ever played"));
+		}
+
+		let deadline =
+			self.last_played.unwrap() + Duration::from_secs(self.timeout.unwrap() as u64);
+
+		warn!("WIP: callback to play sound in {:?}s", deadline);
+
+		Ok(())
+	}
+
+	pub fn add_to_queue(&mut self, text: &'a str) -> Result<()> {
+		if self.queue.len() == 0 {
+			if self.last_played.is_some() && self.timeout.is_some() {
+				let last_played = self.last_played.unwrap();
+				let timeout = self.timeout.unwrap();
+
+				if last_played.elapsed().as_secs() < timeout as u64 {
+					self.queue.push(text);
+					self.setup_callback()?;
+					return Ok(());
+				} else {
+					self.play_tts(text)?;
+					return Ok(());
+				}
+			} else {
+				self.last_played = Some(Instant::now());
+				self.play_tts(text)?;
+			}
+
+			return Ok(());
+		}
+
+		self.queue.push(text);
+
+		Ok(())
+	}
+
+	fn play_tts(&mut self, msg: &str) -> Result<()> {
+		let mut samples: Vec<f32> = Vec::new();
+		let audio = self.synth.synthesize_parallel(msg.into(), None).unwrap();
+		for result in audio {
+			if let Ok(res) = result {
+				samples.append(&mut res.into_vec());
+			}
+		}
+
+		let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
+		let sink = rodio::Sink::try_new(&handle).unwrap();
+
+		self.last_played = Some(Instant::now());
+
+		let buf = SamplesBuffer::new(1, 22050, samples);
+		sink.append(buf);
+
+		sink.sleep_until_end();
+
+		Ok(())
+	}
+}
+
+// Debug Funktion
+pub fn setup_tts<'a>() -> Result<Tts<'a>> {
+	let mut tts_instance = Tts::new("piper/en_US-amy-medium.onnx.json", None)?;
+
+	tts_instance.add_to_queue("TTS initialized")?;
+
+	Ok(tts_instance)
 }
