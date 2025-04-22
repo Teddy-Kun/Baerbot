@@ -4793,6 +4793,7 @@ dependencies = [
  "eyre",
  "serde",
  "specta",
+ "tauri-specta",
  "toml",
 ]
 
@@ -5535,12 +5536,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "tedbot"
+name = "tedbot-service"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "color-eyre",
- "eyre",
  "futures",
  "keyring-lib",
  "lazy_static",
@@ -5551,8 +5551,6 @@ dependencies = [
  "rodio",
  "secret-service 5.0.0",
  "shared",
- "specta",
- "tauri-specta",
  "tokio",
  "tokio-tungstenite",
  "tracing",
@@ -5575,7 +5573,6 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
- "tauri-specta",
 ]
 
 [[package]]

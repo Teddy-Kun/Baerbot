@@ -1,4 +1,3 @@
-use eyre::{Result, eyre};
 use piper_rs::synth::PiperSpeechSynthesizer;
 use rodio::buffer::SamplesBuffer;
 use std::{
@@ -7,6 +6,7 @@ use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
 };
+use tedbot_shared::eyre::{Result, eyre};
 use tokio::{task::JoinHandle, time::Instant};
 use tracing::warn;
 

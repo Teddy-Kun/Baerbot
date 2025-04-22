@@ -1,13 +1,13 @@
 use color_eyre::eyre::Result;
 use keyring::set_global_service_name;
-use shared::cfg::get_merged_cfg;
 use std::sync::Arc;
-use tedbot::{
+use tedbot_service::{
 	BOT_NAME,
 	auth::{self, load_token},
 	chat, install_tracing, new_client, print_channel_info,
 	tts::setup_tts,
 };
+use tedbot_shared::cfg::get_merged_cfg;
 use tracing::{debug, warn};
 
 #[tokio::main]

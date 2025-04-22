@@ -1,11 +1,10 @@
 use crate::TwitchClient;
-use eyre::Result;
 use keyring::KeyringEntry;
-use shared::cfg::Config;
 use std::{
 	fs::{self, File},
 	io::Write,
 };
+use tedbot_shared::{cfg::Config, eyre::Result};
 use tokio::time::sleep;
 use tracing::{debug, warn};
 use twitch_api::HelixClient;

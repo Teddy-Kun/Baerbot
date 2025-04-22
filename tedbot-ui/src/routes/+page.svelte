@@ -14,12 +14,12 @@
 	}
 </script>
 
-<h1>Current Tab: {store.currentTab}</h1>
-<form onsubmit={greet}>
+<div class="flex flex-col gap-4">
+	<h1>Current Tab: {store.currentTab}</h1>
 	<Input
 		id="greet-input"
 		placeholder="Enter a name..."
 		bind:value={name}
 	/>
-	<Button type="submit">Greet</Button>
-</form>
+	<Button type="submit" onclick={greet}>Greet</Button>
+</div>

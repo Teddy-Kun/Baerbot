@@ -1,7 +1,7 @@
 use crate::{BOT_NAME, counter};
-use eyre::Result;
-use shared::cfg::Config;
 use std::{process, str, sync::Arc};
+use tedbot_shared::cfg::Config;
+use tedbot_shared::eyre::Result;
 use tracing::{debug, error, info, warn};
 use twitch_irc::{
 	ClientConfig, SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials,

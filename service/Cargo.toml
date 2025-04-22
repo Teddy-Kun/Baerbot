@@ -1,5 +1,5 @@
 [package]
-name = "tedbot"
+name = "tedbot-service"
 version = "0.1.0"
 edition = "2024"
 
@@ -18,10 +18,6 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
 tokio-tungstenite = { version = "0.26.1", features = ["url"] }
 reqwest = { version = "0.12.15" }
-eyre = { version = "0.6.12", default-features = false, features = [
-    "auto-install",
-    "track-caller",
-] }
 futures = "0.3.31"
 color-eyre = "0.6.3"
 twitch-irc = { version = "5.0.1", features = [
@@ -41,14 +37,12 @@ openssl = { version = "0.10", features = ["vendored"] }
 lazy_static = "1.5.0"
 piper-rs = "0.1.9"
 rodio = { version = "0.20.1", features = ["tracing"] }
-specta = "=2.0.0-rc.22"
-tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 shared = { path = "../shared" }
 
 [profile.release]
 codegen-units = 1
 lto = true
-opt-level = 3
+opt-level = 2
 panic = "unwind"
 strip = true
 

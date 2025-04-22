@@ -1,27 +1,24 @@
 <script lang="ts" module>
 	import BookOpen from "@lucide/svelte/icons/book-open";
-	import Settings2 from "@lucide/svelte/icons/settings-2";
 	import SquareTerminal from "@lucide/svelte/icons/square-terminal";
 
 	// This is sample data.
 	const data = [
 		{
-			title: "Playground",
+			title: "Simple Responses",
 			icon: SquareTerminal,
 		},
 		{
-			title: "Models",
+			title: "Timed Shoutouts",
 			icon: SquareTerminal,
 		},
 		{
-			title: "Documentation",
+			title: "TTS",
 			icon: BookOpen,
-		},
-		{
-			title: "Settings",
-			icon: Settings2,
-		},
+		}
 	];
+
+	store.currentTab = data[0].title;
 </script>
 
 <script lang="ts">
@@ -30,6 +27,7 @@
 	import SidebarHeader from "@/lib/components/AppSidebar/sidebar-header.svelte";
 	import * as Sidebar from "@/lib/components/ui/sidebar/index.js";
 	import type { ComponentProps } from "svelte";
+	import store from "@/store.svelte";
 
 	let {
 		ref = $bindable(null),
