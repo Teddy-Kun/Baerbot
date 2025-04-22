@@ -66,6 +66,8 @@ secret-service = { version = "5.0.0", features = ["rt-tokio-crypto-rust"] }
 lazy_static = "1.5.0"
 piper-rs = "0.1.9"
 rodio = { version = "0.20.1", features = ["tracing"] }
+tray-icon = "0.20.1"
+gtk = "0.18.2"
 
 
 [profile.release]

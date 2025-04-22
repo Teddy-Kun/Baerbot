@@ -1,4 +1,4 @@
-use eyre::{eyre, Result};
+use eyre::{Result, eyre};
 use piper_rs::synth::PiperSpeechSynthesizer;
 use rodio::buffer::SamplesBuffer;
 use std::{
@@ -10,17 +10,19 @@ use std::{
 use tokio::{task::JoinHandle, time::Instant};
 use tracing::warn;
 
+use crate::shared::cfg::Config;
+
 type CallbackHandle = Arc<Mutex<Option<JoinHandle<()>>>>;
 #[derive(Clone)]
-pub struct Tts<'a> {
+pub struct Tts {
 	synth: Arc<PiperSpeechSynthesizer>,
 	timeout: Option<u16>,
-	queue: Vec<&'a str>,
+	queue: Vec<Box<str>>,
 	last_played: Option<Instant>,
 	callback_handle: CallbackHandle,
 }
 
-impl<'a> Debug for Tts<'a> {
+impl Debug for Tts {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(
 			f,
@@ -30,8 +32,8 @@ impl<'a> Debug for Tts<'a> {
 	}
 }
 
-impl<'a> Tts<'a> {
-	pub fn new(model: &'a str, timeout: Option<u16>) -> Result<Self> {
+impl Tts {
+	pub fn new(model: &str, timeout: Option<u16>) -> Result<Self> {
 		let model = piper_rs::from_config_path(Path::new(model))?;
 		let synth = PiperSpeechSynthesizer::new(model)?;
 		Ok(Self {
@@ -66,29 +68,30 @@ impl<'a> Tts<'a> {
 		Ok(())
 	}
 
-	pub fn add_to_queue(&mut self, text: &'a str) -> Result<()> {
+	pub fn add_to_queue(&mut self, text: &str) -> Result<()> {
+		let boxed_text: Box<str> = text.into();
 		if self.queue.len() == 0 {
 			if self.last_played.is_some() && self.timeout.is_some() {
 				let last_played = self.last_played.unwrap();
 				let timeout = self.timeout.unwrap();
 
 				if last_played.elapsed().as_secs() < timeout as u64 {
-					self.queue.push(text);
+					self.queue.push(boxed_text);
 					self.setup_callback()?;
 					return Ok(());
 				} else {
-					self.play_tts(text)?;
+					self.play_tts(boxed_text.as_ref())?;
 					return Ok(());
 				}
 			} else {
 				self.last_played = Some(Instant::now());
-				self.play_tts(text)?;
+				self.play_tts(boxed_text.as_ref())?;
 			}
 
 			return Ok(());
 		}
 
-		self.queue.push(text);
+		self.queue.push(boxed_text);
 
 		Ok(())
 	}
@@ -116,11 +119,16 @@ impl<'a> Tts<'a> {
 	}
 }
 
-// Debug Funktion
-pub fn setup_tts<'a>() -> Result<Tts<'a>> {
-	let mut tts_instance = Tts::new("piper/en_US-amy-medium.onnx.json", None)?;
-
-	tts_instance.add_to_queue("TTS initialized")?;
-
-	Ok(tts_instance)
+pub fn setup_tts(cfg: &Config) -> Result<Tts> {
+	match cfg.tts_model.clone() {
+		None => Err(eyre!("Missing Model for TTS")),
+		Some(model) => match model.to_str() {
+			None => Err(eyre!("Couldn't convert model path to str")),
+			Some(m) => {
+				let mut tts_instance = Tts::new(m, None)?;
+				tts_instance.add_to_queue("TTS initialized")?;
+				Ok(tts_instance)
+			}
+		},
+	}
 }

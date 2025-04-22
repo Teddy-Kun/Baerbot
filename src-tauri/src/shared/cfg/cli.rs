@@ -18,6 +18,12 @@ pub struct Args {
 	)]
 	pub token_file: Option<Arc<str>>,
 
+	#[arg(long, env, help = "Path to the tts model (json)")]
+	tts_model: Option<PathBuf>,
+
+	#[arg(short, long, env, help = "Enable debug mode")]
+	debug: Option<bool>,
+
 	#[arg(long, env, help = "Path to the config file")]
 	pub config: Option<PathBuf>,
 }
@@ -25,6 +31,14 @@ pub struct Args {
 impl SharedAttributes for Args {
 	fn get_username(&self) -> Option<Arc<str>> {
 		self.username.clone()
+	}
+
+	fn get_tts_model(&self) -> Option<PathBuf> {
+		self.tts_model.clone()
+	}
+
+	fn get_debug(&self) -> bool {
+		self.debug.unwrap_or(false)
 	}
 }
 

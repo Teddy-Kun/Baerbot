@@ -1,16 +1,18 @@
+use super::shared::cfg::get_merged_cfg;
 use auth::load_token;
 use color_eyre::eyre::Result;
 use keyring::set_global_service_name;
+use std::sync::Arc;
+use tracing::{debug, info, warn};
+use tray::init_tray;
 use tts::setup_tts;
 use twitch_api::HelixClient;
 use twitch_oauth2::UserToken;
-use std::sync::Arc;
-use super::shared::cfg::get_merged_cfg;
-use tracing::{debug, info, warn};
 
 pub mod auth;
 pub mod chat;
 pub mod counter;
+pub mod tray;
 pub mod tts;
 
 pub const BOT_NAME: &str = "Tedbot";
@@ -53,7 +55,6 @@ pub fn install_tracing() {
 		.init();
 }
 
-
 pub async fn start_service() -> Result<()> {
 	install_tracing();
 	color_eyre::install()?;
@@ -77,11 +78,13 @@ pub async fn start_service() -> Result<()> {
 	let conf_clone = conf.clone();
 	let join_handle = tokio::task::spawn_blocking(move || {
 		if conf_clone.tts_chance > 0.0 {
-			if let Err(e) = setup_tts() {
+			if let Err(e) = setup_tts(conf_clone.as_ref()) {
 				warn!("Failed to setup TTS: {:#?}", e);
 			}
 		}
 	});
+
+	let _icon = init_tray()?;
 
 	chat::chat(&token, conf.clone()).await?;
 
