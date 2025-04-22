@@ -1,7 +1,5 @@
-use tedbot_shared::{
-	data,
-	tauri_specta::{Builder, collect_commands},
-};
+use tauri_specta::{Builder, collect_commands};
+use crate::shared::data;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]

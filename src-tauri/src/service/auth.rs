@@ -1,14 +1,17 @@
-use crate::TwitchClient;
+use eyre::Result;
 use keyring::KeyringEntry;
 use std::{
 	fs::{self, File},
 	io::Write,
 };
-use tedbot_shared::{cfg::Config, eyre::Result};
 use tokio::time::sleep;
 use tracing::{debug, warn};
 use twitch_api::HelixClient;
 use twitch_oauth2::{AccessToken, ClientId, DeviceUserTokenBuilder, Scope, UserToken};
+
+use crate::shared::cfg::Config;
+
+use super::TwitchClient;
 
 pub async fn twitch_auth(conf: &Config) -> Result<UserToken> {
 	let client_id = ClientId::new("15xr4zw5ue7jxpbvt0jwwrwywqch9a".to_string());

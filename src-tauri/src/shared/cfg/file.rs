@@ -1,9 +1,7 @@
 use eyre::{Result, eyre};
 use serde::{Deserialize, Serialize};
 use std::{path::Path, sync::Arc};
-
-use crate::data::SimpleResponse;
-
+use crate::shared::data::SimpleResponse;
 use super::SharedAttributes;
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]

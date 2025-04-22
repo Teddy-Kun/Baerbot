@@ -1,8 +1,8 @@
-use crate::data::SimpleResponse;
 use cli::get_args;
 use eyre::{Result, eyre};
 use file::CfgFile;
 use std::{path::Path, sync::Arc};
+use super::data::SimpleResponse;
 
 mod cli;
 mod file;

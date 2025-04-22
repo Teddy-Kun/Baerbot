@@ -1,13 +1,15 @@
-use crate::{BOT_NAME, counter};
 use std::{process, str, sync::Arc};
-use tedbot_shared::cfg::Config;
-use tedbot_shared::eyre::Result;
+use eyre::Result;
 use tracing::{debug, error, info, warn};
 use twitch_irc::{
 	ClientConfig, SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials,
 	message::ServerMessage,
 };
 use twitch_oauth2::UserToken;
+
+use crate::{service::BOT_NAME, shared::cfg::Config};
+
+use super::counter;
 
 // Example from docs
 pub async fn chat(token: &UserToken, config: Arc<Config>) -> Result<()> {

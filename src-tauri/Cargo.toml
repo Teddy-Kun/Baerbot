@@ -1,0 +1,76 @@
+[package]
+name = "tedbot-ui"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["Teddy-Kun"]
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "tedbot_ui_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.5.1", features = [] }
+tauri-plugin-opener = "2.2.6"
+serde = { version = "1.0.219", features = ["derive", "rc"] }
+serde_json = "1.0.140"
+specta = "=2.0.0-rc.22"
+specta-typescript = "=0.0.9"
+clap = { version = "4.5.37", features = [
+    "derive",
+    "env",
+    "unicode",
+    "wrap_help",
+] }
+clap_config = "0.1.1"
+eyre = { version = "0.6.12", default-features = false, features = [
+    "auto-install",
+    "track-caller",
+] }
+dirs = "6.0.0"
+toml = "0.8.20"
+tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
+twitch_api = { version = "0.7.0", features = [
+    "twitch_oauth2",
+    "client",
+    "helix",
+    "eventsub",
+    "hmac",
+    "reqwest",
+] }
+twitch_oauth2 = { version = "0.15.1", features = ["client"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
+tokio-tungstenite = { version = "0.26.1", features = ["url"] }
+reqwest = { version = "0.12.15" }
+futures = "0.3.31"
+color-eyre = "0.6.3"
+twitch-irc = { version = "5.0.1", features = [
+    "transport-ws-rustls-native-roots",
+    "refreshing-token-rustls-native-roots",
+] }
+tracing-error = "0.2.1"
+chrono = "0.4.39"
+open = "5.3.2"
+keyring-lib = { version = "1.0.2", features = ["derive"] }
+secret-service = { version = "5.0.0", features = ["rt-tokio-crypto-rust"] }
+lazy_static = "1.5.0"
+piper-rs = "0.1.9"
+rodio = { version = "0.20.1", features = ["tracing"] }
+
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 2
+panic = "unwind"
+strip = true
