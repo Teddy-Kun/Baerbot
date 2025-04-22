@@ -6,7 +6,6 @@ use tedbot_lib::{start_service, start_ui};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	let service = start_service();
 	start_ui();
-	service.await
+	start_service().await
 }

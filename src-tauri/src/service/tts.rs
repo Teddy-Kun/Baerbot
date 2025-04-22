@@ -1,4 +1,5 @@
 use eyre::{Result, eyre};
+use log::warn;
 use piper_rs::synth::PiperSpeechSynthesizer;
 use rodio::buffer::SamplesBuffer;
 use std::{
@@ -8,7 +9,6 @@ use std::{
 	time::Duration,
 };
 use tokio::{task::JoinHandle, time::Instant};
-use tracing::warn;
 
 use crate::shared::cfg::Config;
 

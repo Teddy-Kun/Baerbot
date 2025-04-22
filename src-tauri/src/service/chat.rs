@@ -1,6 +1,6 @@
 use eyre::Result;
+use log::{debug, error, info, warn};
 use std::{process, str, sync::Arc};
-use tracing::{debug, error, info, warn};
 use twitch_irc::{
 	ClientConfig, SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials,
 	message::ServerMessage,

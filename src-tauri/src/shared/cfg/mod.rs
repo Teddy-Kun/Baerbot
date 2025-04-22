@@ -3,6 +3,7 @@ use cli::get_args;
 use eyre::{Result, eyre};
 use file::CfgFile;
 use std::{
+	fs::File,
 	path::{Path, PathBuf},
 	sync::Arc,
 };
@@ -53,6 +54,10 @@ pub fn get_merged_cfg() -> Result<Config> {
 			}
 		},
 	};
+
+	if !cfg_path.exists() {
+		File::create(&cfg_path)?;
+	}
 
 	let cfg = CfgFile::from_file(cfg_path.as_ref())?;
 

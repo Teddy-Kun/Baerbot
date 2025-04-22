@@ -2,8 +2,8 @@ use super::shared::{cfg::get_merged_cfg, data::BOT_NAME};
 use auth::load_token;
 use color_eyre::eyre::Result;
 use keyring::set_global_service_name;
+use log::{debug, info, warn};
 use std::sync::Arc;
-use tracing::{debug, info, warn};
 use tts::setup_tts;
 use twitch_api::HelixClient;
 use twitch_oauth2::UserToken;
@@ -13,13 +13,13 @@ mod chat;
 mod counter;
 mod tts;
 
-pub type TwitchClient = HelixClient<'static, reqwest::Client>;
+type TwitchClient = HelixClient<'static, reqwest::Client>;
 
-pub fn new_client() -> Arc<TwitchClient> {
+fn new_client() -> Arc<TwitchClient> {
 	Arc::new(HelixClient::default())
 }
 
-pub async fn print_channel_info(
+async fn print_channel_info(
 	client: &TwitchClient,
 	username: &str,
 	token: &UserToken,
@@ -34,25 +34,7 @@ pub async fn print_channel_info(
 	Ok(())
 }
 
-pub fn install_tracing() {
-	use tracing_error::ErrorLayer;
-	use tracing_subscriber::prelude::*;
-	use tracing_subscriber::{EnvFilter, fmt};
-
-	let fmt_layer = fmt::layer().with_target(false);
-	let filter_layer = EnvFilter::try_from_default_env()
-		.or_else(|_| EnvFilter::try_new("info"))
-		.unwrap();
-
-	tracing_subscriber::registry()
-		.with(filter_layer)
-		.with(fmt_layer)
-		.with(ErrorLayer::default())
-		.init();
-}
-
 pub async fn start_service() -> Result<()> {
-	install_tracing();
 	color_eyre::install()?;
 
 	set_global_service_name(BOT_NAME);
