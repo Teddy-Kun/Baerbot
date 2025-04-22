@@ -1,5 +1,5 @@
-use tauri_specta::{Builder, collect_commands};
 use crate::shared::data;
+use tauri_specta::{Builder, collect_commands};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
