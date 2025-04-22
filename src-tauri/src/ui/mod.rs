@@ -1,5 +1,7 @@
 use crate::shared::data;
 use tauri_specta::{Builder, collect_commands};
+use tray::init_tray;
+mod tray;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -29,6 +31,11 @@ pub fn run() {
 	}
 	tauri::Builder::default()
 		.plugin(tauri_plugin_opener::init())
+		.setup(|app| {
+			let _ = init_tray(app)?;
+
+			Ok(())
+		})
 		.invoke_handler(ts_builder.invoke_handler())
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");

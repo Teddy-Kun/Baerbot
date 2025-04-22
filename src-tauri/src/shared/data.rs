@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
+pub const BOT_NAME: &str = "Tedbot";
+
 #[derive(Clone, Debug, Deserialize, Serialize, Type)]
 pub struct SimpleResponse {
 	pub trigger: String,

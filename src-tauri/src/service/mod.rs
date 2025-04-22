@@ -1,21 +1,17 @@
-use super::shared::cfg::get_merged_cfg;
+use super::shared::{cfg::get_merged_cfg, data::BOT_NAME};
 use auth::load_token;
 use color_eyre::eyre::Result;
 use keyring::set_global_service_name;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
-use tray::init_tray;
 use tts::setup_tts;
 use twitch_api::HelixClient;
 use twitch_oauth2::UserToken;
 
-pub mod auth;
-pub mod chat;
-pub mod counter;
-pub mod tray;
-pub mod tts;
-
-pub const BOT_NAME: &str = "Tedbot";
+mod auth;
+mod chat;
+mod counter;
+mod tts;
 
 pub type TwitchClient = HelixClient<'static, reqwest::Client>;
 
@@ -83,8 +79,6 @@ pub async fn start_service() -> Result<()> {
 			}
 		}
 	});
-
-	let _icon = init_tray()?;
 
 	chat::chat(&token, conf.clone()).await?;
 
