@@ -5,8 +5,7 @@ import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
-import stylisticJs from "@stylistic/eslint-plugin-js";
-import stylisticTs from "@stylistic/eslint-plugin-ts";
+import stylistic from '@stylistic/eslint-plugin'
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 
 export default ts.config(
@@ -35,17 +34,16 @@ export default ts.config(
 		},
 
 		plugins: {
-			"@stylistic/js": stylisticJs,
-			"@stylistic/ts": stylisticTs,
+			'@stylistic': stylistic,
 		},
 
 		rules: {
-			"@stylistic/ts/indent": ["error", "tab"],
-			"@stylistic/ts/semi": "error",
-			"@stylistic/ts/quotes": ["error", "double"],
-			"@stylistic/ts/space-before-blocks": "error",
-			"@stylistic/ts/quote-props": ["error", "as-needed"],
-			"@stylistic/js/no-multi-spaces": "error",
+			"@stylistic/indent": ["error", "tab"],
+			"@stylistic/semi": "error",
+			"@stylistic/quotes": ["error", "double"],
+			"@stylistic/space-before-blocks": "error",
+			"@stylistic/quote-props": ["error", "as-needed"],
+			"@stylistic/no-multi-spaces": "error",
 
 			"@typescript-eslint/explicit-function-return-type": "error",
 			"@typescript-eslint/no-unused-vars": [
