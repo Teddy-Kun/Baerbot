@@ -12,3 +12,4 @@ vite.config.ts.timestamp-*
 piper/
 tedbot.toml
 .eslintcache
+src/lib/bindings.ts
