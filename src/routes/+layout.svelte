@@ -2,28 +2,20 @@
 	import { ModeWatcher } from "mode-watcher";
 	import "../app.css";
 	import store from "$lib/store.svelte";
-	import { goto } from "$app/navigation";
-	import { resolve } from "$app/paths";
-	
+	import DebugOverlay from "$lib/components/debug_overlay.svelte";
+
 	let { children } = $props();
 
-	function check_logged_in_status(): void {
-		if (!store.logged_in)
-			goto(resolve("/login"));
-		else 
-			goto(resolve("/bot"));
+	function toggel_debug_mode(): void {
+		store.debug = !store.debug;
 	}
 
-	$inspect(store.logged_in).with((event) => {
-		// TODO: replace with navigation on login
-		// TODO: check logged in status in backend
-		console.debug(`${event} logged_in:`, store.logged_in);
-		check_logged_in_status();
+	addEventListener("keypress", (event) => {
+		if (event.altKey && event.shiftKey && event.key === "D")
+			toggel_debug_mode();
 	});
-
-	// simulate initial load
-	setTimeout(check_logged_in_status, 2000);
 </script>
 
+<DebugOverlay />
 <ModeWatcher />
 {@render children()}
