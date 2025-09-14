@@ -4,5 +4,6 @@
 mod tauri;
 
 fn main() {
+	tracing_subscriber::fmt::init();
 	tauri::run()
 }
