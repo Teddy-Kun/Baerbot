@@ -1,0 +1,92 @@
+use std::{error::Error as StdError, fmt::Display};
+
+use serde::Serialize;
+use specta::Type;
+use twitch_api::client::CompatError;
+use twitch_oauth2::tokens::errors::{DeviceUserTokenExchangeError, ValidationError};
+
+pub type Res<T> = Result<T, Error>;
+
+// message for the frontend
+#[derive(Debug, Default, Clone, Copy, Serialize, Type)]
+pub enum ErrorMsg {
+	#[default]
+	Unknown,
+	TokenLoad,
+	TokenSave,
+	TwitchAuth,
+}
+
+impl From<Error> for ErrorMsg {
+	fn from(value: Error) -> Self {
+		value.msg
+	}
+}
+
+// wrap it in a second box, to reduce the stack size of the error
+type ThinError = Box<Box<dyn StdError>>;
+
+#[derive(Debug)]
+pub struct Error {
+	src: Option<ThinError>,
+	pub msg: ErrorMsg,
+}
+
+impl Error {
+	pub fn new(src: Option<ThinError>, msg: ErrorMsg) -> Self {
+		// TODO: log error
+		Self { src, msg }
+	}
+
+	pub fn set_msg(mut self, msg: ErrorMsg) -> Self {
+		self.msg = msg;
+		self
+	}
+}
+
+impl Display for Error {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match &self.src {
+			None => write!(f, "{:?}", self.msg),
+			Some(err) => write!(f, "{:?}: {}", self.msg, err),
+		}
+	}
+}
+
+impl StdError for Error {
+	fn source(&self) -> Option<&(dyn StdError + 'static)> {
+		self.src.as_ref().map(|s| &**s).map(|v| &**v)
+	}
+}
+
+impl From<std::io::Error> for Error {
+	fn from(value: std::io::Error) -> Self {
+		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+	}
+}
+
+impl From<keyring::Error> for Error {
+	fn from(value: keyring::Error) -> Self {
+		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+	}
+}
+
+type ThreadsafeError = dyn StdError + Send + Sync + 'static;
+
+impl From<ValidationError<&ThreadsafeError>> for Error {
+	fn from(value: ValidationError<&ThreadsafeError>) -> Self {
+		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+	}
+}
+
+impl From<ValidationError<CompatError<reqwest::Error>>> for Error {
+	fn from(value: ValidationError<CompatError<reqwest::Error>>) -> Self {
+		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+	}
+}
+
+impl From<DeviceUserTokenExchangeError<CompatError<reqwest::Error>>> for Error {
+	fn from(value: DeviceUserTokenExchangeError<CompatError<reqwest::Error>>) -> Self {
+		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+	}
+}
