@@ -4,10 +4,8 @@
 	import { commands } from "$lib/bindings";
 	import Chat from "$lib/components/chat.svelte";
 	import Hamster from "$lib/components/hamster.svelte";
-	import Button from "$lib/components/ui/button/button.svelte";
 	import * as Resizable from "$lib/components/ui/resizable/index.js";
 	import store from "$lib/store.svelte";
-	import { set_accent } from "$lib/utils";
 	import { onMount } from "svelte";
 
 	onMount(() => {
@@ -21,7 +19,7 @@
 <div class="flex-1">
 	<Resizable.PaneGroup direction="horizontal">
 		<Resizable.Pane>
-			<Button onclick={(): void => set_accent("#ff0000")}>TEST</Button>
+			Something will be here eventually I swear
 		</Resizable.Pane>
 		<Resizable.Handle />
 		<Resizable.Pane>

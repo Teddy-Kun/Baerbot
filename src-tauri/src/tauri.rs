@@ -1,6 +1,8 @@
 use tauri_specta::{Builder, collect_commands};
 use tedbot_lib::{
 	error::ErrorMsg,
+	os_color::ColorSchemeAccent,
+	os_color::get_color_scheme,
 	twitch::{TWITCH_CLIENT, TwitchClient, auth::load_token},
 };
 
@@ -39,9 +41,20 @@ async fn is_logged_in() -> Option<String> {
 	}
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn get_accent_color() -> Option<ColorSchemeAccent> {
+	get_color_scheme().await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-	let builder = Builder::new().commands(collect_commands![greet, login, is_logged_in]);
+	let builder = Builder::new().commands(collect_commands![
+		greet,
+		login,
+		is_logged_in,
+		get_accent_color
+	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
 	{

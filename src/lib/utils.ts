@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { ErrorMsg } from "./bindings";
+import { commands, type ErrorMsg } from "./bindings";
 import { toast } from "svelte-sonner";
 
 export function cn(...inputs: ClassValue[]) {
@@ -21,6 +21,13 @@ export function set_accent(color: string): void {
 	root.style.setProperty("--sidebar-primary", color)
 	root.style.setProperty("--sidebar-ring", color)
 	console.log(color, root)
+}
+
+export function get_accent_color(): void {
+	commands.getAccentColor().then((res) => {
+		if (res)
+			set_accent(res.hex_code);
+	})
 }
 
 export function toast_error(err: ErrorMsg): void {

@@ -15,6 +15,7 @@ pub enum ErrorMsg {
 	TokenLoad,
 	TokenSave,
 	TwitchAuth,
+	GetColorScheme,
 }
 
 impl From<Error> for ErrorMsg {
@@ -89,5 +90,19 @@ impl From<ValidationError<CompatError<reqwest::Error>>> for Error {
 impl From<DeviceUserTokenExchangeError<CompatError<reqwest::Error>>> for Error {
 	fn from(value: DeviceUserTokenExchangeError<CompatError<reqwest::Error>>) -> Self {
 		Self::new(Some(value.into()), ErrorMsg::Unknown)
+	}
+}
+
+#[cfg(target_os = "windows")]
+impl From<windows::core::Error> for Error {
+	fn from(value: windows::core::Error) -> Self {
+		Self::new(Some(value.into()), ErrorMsg::GetColorScheme)
+	}
+}
+
+#[cfg(target_os = "windows")]
+impl From<hex::FromHexError> for Error {
+	fn from(value: hex::FromHexError) -> Self {
+		Self::new(Some(value.into()), ErrorMsg::GetColorScheme)
 	}
 }
