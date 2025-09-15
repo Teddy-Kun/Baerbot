@@ -8,7 +8,7 @@ use twitch_oauth2::tokens::errors::{DeviceUserTokenExchangeError, ValidationErro
 pub type Res<T> = Result<T, Error>;
 
 // message for the frontend
-#[derive(Debug, Default, Clone, Copy, Serialize, Type)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Type, PartialEq, Eq)]
 pub enum ErrorMsg {
 	#[default]
 	Unknown,
@@ -23,26 +23,33 @@ impl From<Error> for ErrorMsg {
 	}
 }
 
-// wrap it in a second box, to reduce the stack size of the error
-type ThinError = Box<Box<dyn StdError>>;
-
 #[derive(Debug)]
 pub struct Error {
-	src: Option<ThinError>,
+	src: Option<anyhow::Error>,
 	pub msg: ErrorMsg,
 }
 
 impl Error {
-	pub fn new(src: Option<ThinError>, msg: ErrorMsg) -> Self {
+	pub fn new(src: Option<anyhow::Error>, msg: ErrorMsg) -> Self {
 		// TODO: log error
 		Self { src, msg }
 	}
 
-	pub fn set_msg(mut self, msg: ErrorMsg) -> Self {
+	pub fn try_set_msg(mut self, msg: ErrorMsg) -> Self {
+		if msg == ErrorMsg::Unknown {
+			self.msg = msg;
+		}
+
+		self
+	}
+
+	pub fn overwrite_msg(mut self, msg: ErrorMsg) -> Self {
 		self.msg = msg;
 		self
 	}
 }
+
+impl StdError for Error {}
 
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -53,21 +60,15 @@ impl Display for Error {
 	}
 }
 
-impl StdError for Error {
-	fn source(&self) -> Option<&(dyn StdError + 'static)> {
-		self.src.as_ref().map(|s| &**s).map(|v| &**v)
-	}
-}
-
 impl From<std::io::Error> for Error {
 	fn from(value: std::io::Error) -> Self {
-		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+		Self::new(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<keyring::Error> for Error {
 	fn from(value: keyring::Error) -> Self {
-		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+		Self::new(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
@@ -75,18 +76,18 @@ type ThreadsafeError = dyn StdError + Send + Sync + 'static;
 
 impl From<ValidationError<&ThreadsafeError>> for Error {
 	fn from(value: ValidationError<&ThreadsafeError>) -> Self {
-		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+		Self::new(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<ValidationError<CompatError<reqwest::Error>>> for Error {
 	fn from(value: ValidationError<CompatError<reqwest::Error>>) -> Self {
-		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+		Self::new(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<DeviceUserTokenExchangeError<CompatError<reqwest::Error>>> for Error {
 	fn from(value: DeviceUserTokenExchangeError<CompatError<reqwest::Error>>) -> Self {
-		Self::new(Some(Box::new(Box::from(value))), ErrorMsg::Unknown)
+		Self::new(Some(value.into()), ErrorMsg::Unknown)
 	}
 }

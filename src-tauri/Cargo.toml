@@ -58,6 +58,7 @@ rodio = { version = "0.21.1" }
 tauri-plugin-log = "2.7.0"
 tracing-subscriber = "0.3.20"
 tracing = "0.1.41"
+anyhow = "1.0.99"
 
 [profile.dev]
 incremental = true
