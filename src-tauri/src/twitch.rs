@@ -14,6 +14,12 @@ pub struct TwitchClient {
 	token: Option<Box<UserToken>>,
 }
 
+impl Default for TwitchClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TwitchClient {
 	pub fn new() -> Self {
 		Self {
@@ -22,15 +28,11 @@ impl TwitchClient {
 		}
 	}
 
-	pub fn is_logged_in(&self) -> bool {
-		self.token.is_some()
-	}
-
 	pub fn set_token(&mut self, tkn: UserToken) {
 		self.token = Some(Box::new(tkn))
 	}
 
-	pub fn get_username(&self) {
-		// TODO
+	pub fn get_username(&self) -> Option<String> {
+		self.token.as_ref().map(|tkn| tkn.login.to_string())
 	}
 }

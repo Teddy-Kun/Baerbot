@@ -13,30 +13,30 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 #[specta::specta]
-async fn login() -> Result<(), ErrorMsg> {
+async fn login() -> Result<String, ErrorMsg> {
 	let tkn = TwitchClient::login().await?;
+	let name = tkn.login.to_string();
 
-	let cl = TWITCH_CLIENT.clone();
+	TWITCH_CLIENT.write().await.set_token(tkn);
 
-	cl.write().await.set_token(tkn);
-
-	Ok(())
+	Ok(name)
 }
 
 #[tauri::command]
 #[specta::specta]
-async fn is_logged_in() -> bool {
-	let mut logged_in = TWITCH_CLIENT.read().await.is_logged_in();
-	if logged_in {
-		return true;
+async fn is_logged_in() -> Option<String> {
+	let maybe = TWITCH_CLIENT.read().await.get_username();
+	match maybe {
+		None => match load_token().await {
+			Err(_) => None,
+			Ok(tkn) => {
+				let name = tkn.login.to_string();
+				TWITCH_CLIENT.write().await.set_token(tkn);
+				Some(name)
+			}
+		},
+		Some(n) => Some(n),
 	}
-
-	if let Ok(tkn) = load_token().await {
-		logged_in = true;
-		TWITCH_CLIENT.write().await.set_token(tkn);
-	}
-
-	logged_in
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

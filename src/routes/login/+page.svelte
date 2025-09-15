@@ -4,9 +4,8 @@
 	import { commands } from "$lib/bindings";
 	import ThemeToggle from "$lib/components/theme_toggle.svelte";
 	import Hamster from "$lib/components/hamster.svelte";
-	import { goto } from "$app/navigation";
-	import { resolve } from "$app/paths";
 	import store from "$lib/store.svelte";
+	import { toast_error } from "$lib/utils";
 
 	let loading = $state(false);
 	let error = $state(false);
@@ -18,10 +17,9 @@
 			loading = false;
 			if (res.status === "ok") {
 				console.log("logged in", res);
-				store.username = "DEBUG"; // TODO
-				goto(resolve("/bot"));
+				store.register_login(res.data);
 			} else {
-				console.error("fuck", res.error);
+				toast_error(res.error);
 				error = true;
 			}
 		});
