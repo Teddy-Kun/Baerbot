@@ -32,7 +32,7 @@
 	<ThemeToggle class="absolute top-4 right-4" />
 
 	{#if !loading}
-		<Button class="bg-[#a970ff] h-16 w-50" onclick={login}>
+		<Button class="bg-[#a970ff] h-16 w-50 text-foreground" onclick={login}>
 			<Twitch /> Login with Twitch
 		</Button>
 		{#if error}
