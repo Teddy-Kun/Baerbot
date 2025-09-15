@@ -3,6 +3,7 @@
 	import "../app.css";
 	import store from "$lib/store.svelte";
 	import DebugOverlay from "$lib/components/debug_overlay.svelte";
+	import { Toaster } from "$lib/components/ui/sonner/index.js";
 
 	let { children } = $props();
 
@@ -18,4 +19,5 @@
 
 <DebugOverlay />
 <ModeWatcher />
+<Toaster />
 {@render children()}
