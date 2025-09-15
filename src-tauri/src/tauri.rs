@@ -1,5 +1,8 @@
 use tauri_specta::{Builder, collect_commands};
-use tedbot_lib::{error::ErrorMsg, twitch::auth::twitch_auth};
+use tedbot_lib::{
+	error::ErrorMsg,
+	twitch::{TWITCH_CLIENT, TwitchClient},
+};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -11,13 +14,25 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 #[specta::specta]
 async fn login() -> Result<(), ErrorMsg> {
-	_ = twitch_auth().await?;
+	let tkn = TwitchClient::login().await?;
+	let b = Box::new(tkn);
+
+	let cl = TWITCH_CLIENT.clone();
+
+	cl.write().await.set_token(b);
+
 	Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn is_logged_in() -> bool {
+	TWITCH_CLIENT.read().await.is_logged_in()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-	let builder = Builder::new().commands(collect_commands![greet, login]);
+	let builder = Builder::new().commands(collect_commands![greet, login, is_logged_in]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
 	{
