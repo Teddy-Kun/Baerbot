@@ -16,8 +16,8 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust Toolchains
-        run: rustup target add x86_64-pc-windows-msvc --toolchain nightly
+      - name: Set Rust to Nightly
+        run: rustup override set nightly
       - name: Install Just
         uses: extractions/setup-just@v3
       - name: Install NPM
