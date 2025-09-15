@@ -17,9 +17,13 @@
 	}: ChatProps = $props();
 </script>
 
-<iframe
-	class={cls}
-	src={`https://www.giambaj.it/twitch/jchat/v2/?channel=${channel_name}&size=${size}&font=1&animate=true&bots=true&stroke=${stroke ?? size}&shadow=${shadow ?? size}`}
-	title="Chat Preview"
->
-</iframe>
+<div class={cls}>
+	<iframe
+		class="size-full"
+		src={`http://www.giambaj.it/twitch/jchat/v2/?channel=${channel_name}&size=${size}&background-color=black&font=1&animate=true&bots=true&stroke=${stroke ?? size}&shadow=${shadow ?? size}`}
+		title="Chat Preview"
+		allowtransparency={true}
+		style="background-color: transparent;"
+	>
+	</iframe>
+</div>
