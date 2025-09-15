@@ -9,7 +9,7 @@
 
 <span class={className}>
 	<svg
-		fill="var(--color-background)"
+		fill="var(--color-foreground)"
 		width="800px"
 		height="800px"
 		viewBox="0 0 32 32"
