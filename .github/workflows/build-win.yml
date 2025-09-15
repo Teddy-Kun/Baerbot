@@ -1,10 +1,10 @@
-name: Build
+name: Build Windows
 on: [push, pull_request]
 env:
   CARGO_TERM_COLOR: always
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
@@ -17,7 +17,7 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust Toolchains
-        run: rustup target add nightly-x86_64-unknown-linux-gnu --toolchain nightly
+        run: rustup target add x86_64-pc-windows-msvc --toolchain nightly
       - name: Install Just
         uses: extractions/setup-just@v3
       - name: Install NPM
@@ -28,3 +28,5 @@ jobs:
         run: bun i --frozen-lockfile
       - name: Build-Linux
         run: just b
+      - name: Build-Windows
+        run: just bw
