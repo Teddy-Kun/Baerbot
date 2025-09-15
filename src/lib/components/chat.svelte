@@ -1,15 +1,25 @@
 <script lang="ts">
+	import type { ClassValue } from "svelte/elements";
+
 	interface ChatProps {
 		channel_name: string;
 		size: 1 | 2 | 3;
-		stroke: 1 | 2 | 3 | 4;
-		shadow: 1 | 2 | 3;
+		stroke?: 1 | 2 | 3 | 4;
+		shadow?: 1 | 2 | 3;
+		class?: ClassValue;
 	}
-	let { channel_name, size, stroke, shadow }: ChatProps = $props();
+	let {
+		channel_name,
+		size,
+		stroke,
+		shadow,
+		class: cls,
+	}: ChatProps = $props();
 </script>
 
 <iframe
-	src={`https://www.giambaj.it/twitch/jchat/v2/?channel=${channel_name}&size=${size}&font=1&animate=true&bots=true&fade=30&stroke=${stroke}&shadow=${shadow}`}
+	class={cls}
+	src={`https://www.giambaj.it/twitch/jchat/v2/?channel=${channel_name}&size=${size}&font=1&animate=true&bots=true&stroke=${stroke ?? size}&shadow=${shadow ?? size}`}
 	title="Chat Preview"
 >
 </iframe>
