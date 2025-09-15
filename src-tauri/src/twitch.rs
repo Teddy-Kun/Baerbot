@@ -26,8 +26,8 @@ impl TwitchClient {
 		self.token.is_some()
 	}
 
-	pub fn set_token(&mut self, tkn: Box<UserToken>) {
-		self.token = Some(tkn)
+	pub fn set_token(&mut self, tkn: UserToken) {
+		self.token = Some(Box::new(tkn))
 	}
 
 	pub fn get_username(&self) {
