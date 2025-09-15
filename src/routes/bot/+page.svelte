@@ -4,6 +4,7 @@
 	import { commands } from "$lib/bindings";
 	import Chat from "$lib/components/chat.svelte";
 	import Hamster from "$lib/components/hamster.svelte";
+	import Button from "$lib/components/ui/button/button.svelte";
 	import * as Resizable from "$lib/components/ui/resizable/index.js";
 	import store from "$lib/store.svelte";
 	import { onMount } from "svelte";
@@ -19,7 +20,7 @@
 <div class="flex-1">
 	<Resizable.PaneGroup direction="horizontal">
 		<Resizable.Pane>
-			Something will be here eventually I swear
+			<Button>Something will be here eventually I swear</Button>
 		</Resizable.Pane>
 		<Resizable.Handle />
 		<Resizable.Pane>
