@@ -4,7 +4,9 @@ use tokio::sync::RwLock;
 use twitch_api::HelixClient;
 use twitch_oauth2::UserToken;
 
+pub mod actions;
 pub mod auth;
+pub mod chat;
 
 pub static TWITCH_CLIENT: LazyLock<Arc<RwLock<TwitchClient>>> =
 	LazyLock::new(|| Arc::new(RwLock::new(TwitchClient::new())));
@@ -15,9 +17,9 @@ pub struct TwitchClient {
 }
 
 impl Default for TwitchClient {
-    fn default() -> Self {
-        Self::new()
-    }
+	fn default() -> Self {
+		Self::new()
+	}
 }
 
 impl TwitchClient {
