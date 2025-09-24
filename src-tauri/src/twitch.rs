@@ -7,6 +7,7 @@ use twitch_oauth2::UserToken;
 pub mod actions;
 pub mod auth;
 pub mod chat;
+pub mod counter;
 
 pub static TWITCH_CLIENT: LazyLock<Arc<RwLock<TwitchClient>>> =
 	LazyLock::new(|| Arc::new(RwLock::new(TwitchClient::new())));
