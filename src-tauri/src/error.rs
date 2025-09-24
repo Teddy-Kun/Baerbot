@@ -93,6 +93,18 @@ impl From<DeviceUserTokenExchangeError<CompatError<reqwest::Error>>> for Error {
 	}
 }
 
+impl From<toml::ser::Error> for Error {
+	fn from(value: toml::ser::Error) -> Self {
+		Self::new(Some(value.into()), ErrorMsg::Unknown)
+	}
+}
+
+impl From<toml::de::Error> for Error {
+	fn from(value: toml::de::Error) -> Self {
+		Self::new(Some(value.into()), ErrorMsg::Unknown)
+	}
+}
+
 #[cfg(target_os = "windows")]
 impl From<windows::core::Error> for Error {
 	fn from(value: windows::core::Error) -> Self {
