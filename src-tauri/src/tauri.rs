@@ -1,12 +1,10 @@
 use tauri_specta::{Builder, collect_commands};
 use tedbot_lib::{
 	error::ErrorMsg,
-	os_color::ColorSchemeAccent,
-	os_color::get_color_scheme,
-	twitch::{TWITCH_CLIENT, TwitchClient, auth::load_token},
+	os_color::{ColorSchemeAccent, get_color_scheme},
+	twitch::{TWITCH_CLIENT, auth::load_token},
 };
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 #[specta::specta]
 fn greet(name: &str) -> String {
@@ -16,10 +14,20 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 #[specta::specta]
 async fn login() -> Result<String, ErrorMsg> {
-	let tkn = TwitchClient::login().await?;
+	let reader = TWITCH_CLIENT.read().await;
+
+	if reader.get_username().is_some() {
+		return Err(ErrorMsg::AlreadyLoggedIn);
+	}
+
+	let tkn = reader.login().await?;
+
+	drop(reader); // drop read lock, because we need to write
+
 	let name = tkn.login.to_string();
 
-	TWITCH_CLIENT.write().await.set_token(tkn);
+	let mut client_writer = TWITCH_CLIENT.write().await;
+	client_writer.set_token(tkn).await;
 
 	Ok(name)
 }
@@ -27,13 +35,16 @@ async fn login() -> Result<String, ErrorMsg> {
 #[tauri::command]
 #[specta::specta]
 async fn is_logged_in() -> Option<String> {
-	let maybe = TWITCH_CLIENT.read().await.get_username();
+	let reader = TWITCH_CLIENT.read().await;
+	let maybe = reader.get_username();
 	match maybe {
-		None => match load_token().await {
+		None => match load_token(&reader).await {
 			Err(_) => None,
 			Ok(tkn) => {
+				drop(reader); // drop read lock, because we need to write
+
 				let name = tkn.login.to_string();
-				TWITCH_CLIENT.write().await.set_token(tkn);
+				TWITCH_CLIENT.write().await.set_token(tkn).await;
 				Some(name)
 			}
 		},
@@ -67,15 +78,12 @@ pub fn run() {
 
 	tauri::Builder::default()
 		// .plugin(tauri_plugin_opener::init())
-		// and finally tell Tauri how to invoke them
 		.invoke_handler(builder.invoke_handler())
 		.setup(move |app| {
-			// This is also required if you want to use events
+			// This is required if you want to use events
 			builder.mount_events(app);
-
 			Ok(())
 		})
-		// on an actual app, remove the string argument
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
 }

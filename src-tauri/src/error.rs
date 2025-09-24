@@ -3,6 +3,7 @@ use std::{error::Error as StdError, fmt::Display};
 use serde::Serialize;
 use specta::Type;
 use twitch_api::client::CompatError;
+use twitch_irc::{SecureTCPTransport, login::StaticLoginCredentials};
 use twitch_oauth2::tokens::errors::{DeviceUserTokenExchangeError, ValidationError};
 
 // message for the frontend
@@ -16,6 +17,8 @@ pub enum ErrorMsg {
 	GetColorScheme,
 	UsernameGone,
 	TokenGone,
+	ChatMsgSend,
+	AlreadyLoggedIn,
 }
 
 impl From<Error> for ErrorMsg {
@@ -112,6 +115,18 @@ impl From<toml::ser::Error> for Error {
 impl From<toml::de::Error> for Error {
 	fn from(value: toml::de::Error) -> Self {
 		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
+	}
+}
+
+impl From<twitch_irc::Error<SecureTCPTransport, StaticLoginCredentials>> for Error {
+	fn from(value: twitch_irc::Error<SecureTCPTransport, StaticLoginCredentials>) -> Self {
+		Self::from_err(Some(value.into()), ErrorMsg::ChatMsgSend)
+	}
+}
+
+impl From<twitch_irc::validate::Error> for Error {
+	fn from(value: twitch_irc::validate::Error) -> Self {
+		Self::from_err(Some(value.into()), ErrorMsg::ChatMsgSend)
 	}
 }
 

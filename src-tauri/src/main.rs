@@ -7,11 +7,11 @@ mod tauri;
 
 fn main() {
 	let sub = tracing_subscriber::fmt()
-		.with_max_level(Level::INFO)
+		.with_max_level(Level::DEBUG)
 		.finish();
 	if let Err(err) = tracing::subscriber::set_global_default(sub) {
 		eprintln!("Error setting up logger: {}", err)
 	}
-	// tedbot_lib::tts::tts();
+
 	tauri::run()
 }

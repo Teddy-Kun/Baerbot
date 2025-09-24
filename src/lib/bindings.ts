@@ -35,7 +35,7 @@ async getAccentColor() : Promise<ColorSchemeAccent | null> {
 /** user-defined types **/
 
 export type ColorSchemeAccent = { hue: number; saturation: number; luminance: number; hex_code: string }
-export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone"
+export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn"
 
 /** tauri-specta globals **/
 
