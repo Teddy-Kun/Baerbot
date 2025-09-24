@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
+use tauri::async_runtime::RwLock;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct InnerCounter {
-	counter: i64,
+	counter: u64,
 	template: String,
 }
 
@@ -21,9 +21,9 @@ impl TwitchCounter {
 		format_counter(&inner)
 	}
 
-	pub async fn sub(&mut self) -> String {
+	pub async fn reset(&mut self) -> String {
 		let mut inner = self.inner.write().await;
-		inner.counter -= 1;
+		inner.counter = 0;
 		format_counter(&inner)
 	}
 }

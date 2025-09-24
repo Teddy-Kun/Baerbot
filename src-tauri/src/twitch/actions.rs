@@ -6,9 +6,9 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
+use tauri::async_runtime::RwLock;
 
-use crate::{dirs::CFG_DIR_PATH, error::Error, twitch::counter::TwitchCounter};
+use crate::{error::Error, statics::CFG_DIR_PATH, twitch::counter::TwitchCounter};
 
 static ACTION_TABLE: LazyLock<RwLock<HashMap<Arc<str>, Action>>> =
 	LazyLock::new(|| RwLock::new(HashMap::new()));
@@ -22,6 +22,7 @@ pub enum Trigger {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Exec {
 	ChatMsg(Arc<str>),
+	Reply(Arc<str>),
 	Counter(TwitchCounter),
 }
 

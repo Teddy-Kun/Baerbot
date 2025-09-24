@@ -43,8 +43,7 @@ twitch_api = { version = "0.7.0", features = [
 	"reqwest",
 ] }
 twitch_oauth2 = { version = "0.15.1", features = ["client"] }
-tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
-tokio-tungstenite = { version = "0.27.0", features = ["url"] }
+tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
 reqwest = { version = "0.12.23" }
 twitch-irc = { version = "5.0.1", features = [
 	"transport-ws-rustls-native-roots",
