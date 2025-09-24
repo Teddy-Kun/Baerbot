@@ -133,13 +133,13 @@ impl From<twitch_irc::validate::Error> for Error {
 #[cfg(target_os = "windows")]
 impl From<windows::core::Error> for Error {
 	fn from(value: windows::core::Error) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::GetColorScheme)
+		Self::from_err(Some(value.into()), ErrorMsg::GetColorScheme)
 	}
 }
 
 #[cfg(target_os = "windows")]
 impl From<hex::FromHexError> for Error {
 	fn from(value: hex::FromHexError) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::GetColorScheme)
+		Self::from_err(Some(value.into()), ErrorMsg::GetColorScheme)
 	}
 }
