@@ -46,7 +46,7 @@ pub async fn get_color_scheme() -> Option<ColorSchemeAccent> {
 		let setts = ashpd::desktop::settings::Settings::new().await.ok()?;
 		let accent: ColorSchemeAccent = setts.accent_color().await.ok()?.into();
 
-		Some(ColorSchemeAccent::from(accent))
+		Some(accent)
 	}
 
 	#[cfg(target_os = "windows")]
