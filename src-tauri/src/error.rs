@@ -5,8 +5,6 @@ use specta::Type;
 use twitch_api::client::CompatError;
 use twitch_oauth2::tokens::errors::{DeviceUserTokenExchangeError, ValidationError};
 
-pub type Res<T> = Result<T, Error>;
-
 // message for the frontend
 #[derive(Debug, Default, Clone, Copy, Serialize, Type, PartialEq, Eq)]
 pub enum ErrorMsg {
@@ -16,6 +14,8 @@ pub enum ErrorMsg {
 	TokenSave,
 	TwitchAuth,
 	GetColorScheme,
+	UsernameGone,
+	TokenGone,
 }
 
 impl From<Error> for ErrorMsg {
@@ -31,7 +31,11 @@ pub struct Error {
 }
 
 impl Error {
-	pub fn new(src: Option<anyhow::Error>, msg: ErrorMsg) -> Self {
+	pub fn new(msg: ErrorMsg) -> Self {
+		Self { msg, src: None }
+	}
+
+	pub fn from_err(src: Option<anyhow::Error>, msg: ErrorMsg) -> Self {
 		// TODO: log error
 		Self { src, msg }
 	}
@@ -61,15 +65,21 @@ impl Display for Error {
 	}
 }
 
+impl From<ErrorMsg> for Error {
+	fn from(value: ErrorMsg) -> Self {
+		Self::new(value)
+	}
+}
+
 impl From<std::io::Error> for Error {
 	fn from(value: std::io::Error) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::Unknown)
+		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<keyring::Error> for Error {
 	fn from(value: keyring::Error) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::Unknown)
+		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
@@ -77,31 +87,31 @@ type ThreadsafeError = dyn StdError + Send + Sync + 'static;
 
 impl From<ValidationError<&ThreadsafeError>> for Error {
 	fn from(value: ValidationError<&ThreadsafeError>) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::Unknown)
+		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<ValidationError<CompatError<reqwest::Error>>> for Error {
 	fn from(value: ValidationError<CompatError<reqwest::Error>>) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::Unknown)
+		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<DeviceUserTokenExchangeError<CompatError<reqwest::Error>>> for Error {
 	fn from(value: DeviceUserTokenExchangeError<CompatError<reqwest::Error>>) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::Unknown)
+		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<toml::ser::Error> for Error {
 	fn from(value: toml::ser::Error) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::Unknown)
+		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
 impl From<toml::de::Error> for Error {
 	fn from(value: toml::de::Error) -> Self {
-		Self::new(Some(value.into()), ErrorMsg::Unknown)
+		Self::from_err(Some(value.into()), ErrorMsg::Unknown)
 	}
 }
 
