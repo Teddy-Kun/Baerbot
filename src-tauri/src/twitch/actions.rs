@@ -1,7 +1,7 @@
 use std::{
 	borrow::Borrow,
 	collections::HashMap,
-	fs::{self, OpenOptions, create_dir_all, read_dir},
+	fs::{self, OpenOptions, create_dir_all, read_dir, remove_file},
 	io::Write,
 	ops::Deref,
 	sync::{Arc, LazyLock},
@@ -117,8 +117,8 @@ pub async fn drop_action(key: &str) {
 	let mut table = ACTION_TABLE.write().await;
 	table.remove(key);
 	// we keep the writing lock to ensure no other writes interrupt us
-	if let Err(e) = save_actions_inner(&table).await {
-		tracing::error!("Error saving actions: {e}")
+	if let Err(e) = delete_action(key) {
+		tracing::error!("Error deleting action from fs: {e}")
 	};
 }
 
@@ -170,6 +170,28 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 	while let Some(res) = futures.next().await {
 		if let Err(e) = res {
 			tracing::warn!("Couldn't save action file {e}");
+		}
+	}
+
+	Ok(())
+}
+
+fn delete_action(key: &str) -> Result<(), Error> {
+	let mut p = CFG_DIR_PATH.clone();
+	p.push("actions");
+
+	if p.is_dir() {
+		for entry in read_dir(&p)? {
+			let entry = entry?;
+			let p = entry.path();
+			let target_name = format!("{key}.toml");
+			if p.is_file()
+				&& let Some(filename) = p.file_name()
+				&& filename == target_name.as_str()
+			{
+				remove_file(&p)?;
+				break;
+			}
 		}
 	}
 
