@@ -18,5 +18,7 @@ pub struct Args {
 	pub token_file: Option<Arc<str>>,
 
 	#[arg(short, long, env, help = "Enable debug mode")]
-	debug: bool,
+	pub debug: bool,
 }
+
+pub struct Config {}
