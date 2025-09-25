@@ -30,6 +30,9 @@ async getAllActions() : Promise<Action[]> {
 },
 async addAction(action: Action) : Promise<void> {
     await TAURI_INVOKE("add_action", { action });
+},
+async removeAction(trigger: string) : Promise<void> {
+    await TAURI_INVOKE("remove_action", { trigger });
 }
 }
 

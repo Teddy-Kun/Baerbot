@@ -104,9 +104,9 @@ pub async fn get_action(key: &str) -> Option<Action> {
 	table.get(key).cloned()
 }
 
-pub async fn add_action(key: ArcStr, action: Action) {
+pub async fn add_action(action: Action) {
 	let mut table = ACTION_TABLE.write().await;
-	table.insert(key, action);
+	table.insert(action.trigger.get_inner().clone(), action);
 	// we keep the writing lock to ensure no other writes interrupt us
 	if let Err(e) = save_actions_inner(&table).await {
 		tracing::error!("Error saving actions: {e}")
@@ -117,7 +117,7 @@ pub async fn drop_action(key: &str) {
 	let mut table = ACTION_TABLE.write().await;
 	table.remove(key);
 	// we keep the writing lock to ensure no other writes interrupt us
-	if let Err(e) = delete_action(key) {
+	if let Err(e) = delete_action_from_fs(key) {
 		tracing::error!("Error deleting action from fs: {e}")
 	};
 }
@@ -176,7 +176,7 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 	Ok(())
 }
 
-fn delete_action(key: &str) -> Result<(), Error> {
+fn delete_action_from_fs(key: &str) -> Result<(), Error> {
 	let mut p = CFG_DIR_PATH.clone();
 	p.push("actions");
 

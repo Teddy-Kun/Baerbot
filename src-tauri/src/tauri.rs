@@ -4,7 +4,7 @@ use tedbot_lib::{
 	os_color::{ColorSchemeAccent, get_color_scheme},
 	twitch::{
 		self, TWITCH_CLIENT,
-		actions::{Action, Trigger},
+		actions::Action,
 		auth::{forget_token, load_token},
 	},
 };
@@ -80,11 +80,14 @@ async fn get_all_actions() -> Vec<Action> {
 #[specta::specta]
 async fn add_action(action: Action) {
 	tracing::info!("Saving action: {action:?}");
+	twitch::actions::add_action(action).await
+}
 
-	let trigger = match &action.trigger {
-		Trigger::Command(s) | Trigger::Redeem(s) => s.clone(),
-	};
-	twitch::actions::add_action(trigger, action).await
+#[tauri::command]
+#[specta::specta]
+async fn remove_action(trigger: String) {
+	tracing::info!("Removing action: {trigger}");
+	twitch::actions::drop_action(trigger.as_str()).await;
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -97,6 +100,7 @@ pub fn run() {
 		get_accent_color,
 		get_all_actions,
 		add_action,
+		remove_action,
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
