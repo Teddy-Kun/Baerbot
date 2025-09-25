@@ -150,7 +150,7 @@ pub async fn save_actions() -> Result<(), Error> {
 pub async fn get_all_actions() -> Vec<Action> {
 	let table = ACTION_TABLE.read().await;
 	let mut v: Vec<Action> = table.values().cloned().collect();
-	v.sort();
+	v.sort_unstable();
 	v
 }
 
