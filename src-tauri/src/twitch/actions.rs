@@ -19,7 +19,7 @@ static ACTION_TABLE: LazyLock<RwLock<HashMap<ArcStr, Action>>> = LazyLock::new(|
 	RwLock::new(m)
 });
 
-#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq, PartialOrd, Ord)]
 // wrapper around Arc<str> so that we can implement Type by hand, until builtin support is in specta
 pub struct ArcStr(Arc<str>);
 
@@ -65,7 +65,7 @@ impl Type for ArcStr {
 	}
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Trigger {
 	Command(ArcStr),
 	Redeem(ArcStr),
@@ -99,6 +99,26 @@ pub struct Action {
 	pub exec: Exec,
 }
 
+impl PartialEq for Action {
+	fn eq(&self, other: &Self) -> bool {
+		self.trigger.eq(&other.trigger)
+	}
+}
+
+impl PartialOrd for Action {
+	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
+impl Eq for Action {}
+
+impl Ord for Action {
+	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+		self.trigger.cmp(&other.trigger)
+	}
+}
+
 pub async fn get_action(key: &str) -> Option<Action> {
 	let table = ACTION_TABLE.read().await;
 	table.get(key).cloned()
@@ -129,7 +149,9 @@ pub async fn save_actions() -> Result<(), Error> {
 
 pub async fn get_all_actions() -> Vec<Action> {
 	let table = ACTION_TABLE.read().await;
-	table.values().cloned().collect()
+	let mut v: Vec<Action> = table.values().cloned().collect();
+	v.sort();
+	v
 }
 
 async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error> {
