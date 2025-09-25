@@ -5540,6 +5540,7 @@ dependencies = [
  "clap_config",
  "colors-transform",
  "dirs",
+ "futures",
  "hex",
  "keyring-lib",
  "open",

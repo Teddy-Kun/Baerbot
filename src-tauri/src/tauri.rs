@@ -2,7 +2,11 @@ use tauri_specta::{Builder, collect_commands};
 use tedbot_lib::{
 	error::ErrorMsg,
 	os_color::{ColorSchemeAccent, get_color_scheme},
-	twitch::{TWITCH_CLIENT, auth::load_token},
+	twitch::{
+		self, TWITCH_CLIENT,
+		actions::{Action, Trigger},
+		auth::{forget_token, load_token},
+	},
 };
 
 #[tauri::command]
@@ -54,8 +58,33 @@ async fn is_logged_in() -> Option<String> {
 
 #[tauri::command]
 #[specta::specta]
+async fn logout() {
+	if let Err(e) = forget_token().await {
+		tracing::error!("Error logging out: {e}");
+	}
+}
+
+#[tauri::command]
+#[specta::specta]
 async fn get_accent_color() -> Option<ColorSchemeAccent> {
 	get_color_scheme().await
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn get_all_actions() -> Vec<Action> {
+	twitch::actions::get_all_actions().await
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn add_action(action: Action) {
+	tracing::info!("Saving action: {action:?}");
+
+	let trigger = match &action.trigger {
+		Trigger::Command(s) | Trigger::Redeem(s) => s.clone(),
+	};
+	twitch::actions::add_action(trigger, action).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -64,7 +93,10 @@ pub fn run() {
 		greet,
 		login,
 		is_logged_in,
-		get_accent_color
+		logout,
+		get_accent_color,
+		get_all_actions,
+		add_action,
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

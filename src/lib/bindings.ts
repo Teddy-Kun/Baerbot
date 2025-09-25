@@ -19,8 +19,17 @@ async login() : Promise<Result<string, ErrorMsg>> {
 async isLoggedIn() : Promise<string | null> {
     return await TAURI_INVOKE("is_logged_in");
 },
+async logout() : Promise<void> {
+    await TAURI_INVOKE("logout");
+},
 async getAccentColor() : Promise<ColorSchemeAccent | null> {
     return await TAURI_INVOKE("get_accent_color");
+},
+async getAllActions() : Promise<Action[]> {
+    return await TAURI_INVOKE("get_all_actions");
+},
+async addAction(action: Action) : Promise<void> {
+    await TAURI_INVOKE("add_action", { action });
 }
 }
 
@@ -34,8 +43,12 @@ async getAccentColor() : Promise<ColorSchemeAccent | null> {
 
 /** user-defined types **/
 
+export type Action = { trigger: Trigger; exec: Exec }
 export type ColorSchemeAccent = { hue: number; saturation: number; luminance: number; hex_code: string }
 export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn"
+export type Exec = { ChatMsg: string } | { Reply: string } | { Counter: InnerCounter }
+export type InnerCounter = { counter: number; template: string }
+export type Trigger = { Command: string } | { Redeem: string }
 
 /** tauri-specta globals **/
 
