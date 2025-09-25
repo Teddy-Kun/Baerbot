@@ -4,7 +4,11 @@ use std::{
 	fs::{self, OpenOptions, create_dir_all, read_dir, remove_file},
 	io::Write,
 	ops::Deref,
-	sync::{Arc, LazyLock},
+	sync::{
+		Arc, LazyLock,
+		atomic::{AtomicU64, Ordering},
+	},
+	time::{SystemTime, UNIX_EPOCH},
 };
 
 use futures::{StreamExt, stream::FuturesUnordered};
@@ -97,6 +101,40 @@ pub enum Exec {
 pub struct Action {
 	pub trigger: Trigger,
 	pub exec: Exec,
+	#[serde(skip)]
+	pub last_used: Arc<AtomicU64>,
+}
+
+impl Action {
+	pub fn allow_use(&self) -> bool {
+		let now = SystemTime::now();
+		let since = now
+			.duration_since(UNIX_EPOCH)
+			.map(|res| (res.as_millis() as u64) - 5000) // 5 second cooldown; TODO: make configurable per Action
+			.unwrap_or(0);
+
+		// load the current value atomically
+		let mut current = self.last_used.load(Ordering::Relaxed);
+
+		loop {
+			// if since is smaller then current just return false
+			if since <= current {
+				return false;
+			}
+
+			// if not try and set the new value
+			// this will only return ok, if between the load and this operation, the value wasn't overwritten
+			match self.last_used.compare_exchange(
+				current,
+				since,
+				Ordering::SeqCst,
+				Ordering::Relaxed,
+			) {
+				Ok(_) => return true,        // we successfully set the new value
+				Err(prev) => current = prev, // if it was overwritten, check again next iteration, where we will most likely return false
+			}
+		}
+	}
 }
 
 impl PartialEq for Action {

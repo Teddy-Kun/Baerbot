@@ -92,6 +92,10 @@ async fn handle_msg(
 		None => return Ok(()),
 	};
 
+	if !action.allow_use() {
+		return Ok(()); // action is still on cooldown
+	}
+
 	tracing::debug!("action: {action:?}");
 
 	match action.exec {

@@ -105,10 +105,14 @@ pub fn run() {
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
 	{
-		use specta_typescript::Typescript;
+		use specta_typescript::{BigIntExportBehavior, Typescript, formatter::eslint};
+
+		let ts_settings = Typescript::default()
+			.bigint(BigIntExportBehavior::BigInt)
+			.formatter(eslint);
 
 		builder
-			.export(Typescript::default(), "../src/lib/bindings.ts")
+			.export(ts_settings, "../src/lib/bindings.ts")
 			.expect("Failed to export typescript bindings");
 	}
 
