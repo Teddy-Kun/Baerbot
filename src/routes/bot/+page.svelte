@@ -54,11 +54,14 @@
 	}
 
 	function remove_action(action: Action): void {
-		commands.removeAction(get_trigger_inner(action)).then(update_actions);
+		commands
+			.removeAction(get_trigger_inner(action.trigger))
+			.then(update_actions);
 	}
 
 	function update_actions(): void {
 		commands.getAllActions().then((res) => {
+			console.debug("actions", res);
 			actions = res;
 			loading = false;
 		});
