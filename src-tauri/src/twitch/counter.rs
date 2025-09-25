@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
+use specta::Type;
 use tauri::async_runtime::RwLock;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Type)]
 struct InnerCounter {
-	counter: u64,
+	counter: u32,
 	template: String,
 }
 
@@ -55,5 +56,21 @@ impl<'de> Deserialize<'de> for TwitchCounter {
 		Ok(TwitchCounter {
 			inner: Arc::new(RwLock::new(inner)),
 		})
+	}
+}
+
+impl Type for TwitchCounter {
+	fn reference(
+		type_map: &mut specta::TypeCollection,
+		generics: &[specta::datatype::DataType],
+	) -> specta::datatype::reference::Reference {
+		<InnerCounter as Type>::reference(type_map, generics)
+	}
+
+	fn inline(
+		type_map: &mut specta::TypeCollection,
+		generics: specta::Generics,
+	) -> specta::datatype::DataType {
+		<InnerCounter as Type>::inline(type_map, generics)
 	}
 }
