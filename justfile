@@ -16,3 +16,6 @@ test:
 
 clean:
     rm -r build && cd src-tauri && cargo clean
+
+lint:
+    bun lint:fix && bun check && cd src-tauri && cargo clippy
