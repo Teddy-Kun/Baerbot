@@ -75,6 +75,13 @@ async fn internal_save_token(token: &UserToken) -> Result<(), Error> {
 	Ok(())
 }
 
+pub async fn forget_token() -> Result<(), Error> {
+	let entry = KeyringEntry::try_new("access_token")?;
+	KeyringEntry::delete_secret(&entry).await?;
+
+	Ok(())
+}
+
 pub async fn load_token(client: &TwitchClient) -> Result<UserToken, Error> {
 	let tkn = internal_load_token(client)
 		.await
