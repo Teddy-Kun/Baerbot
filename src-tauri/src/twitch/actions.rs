@@ -129,14 +129,14 @@ pub async fn save_actions() -> Result<(), Error> {
 
 pub async fn get_all_actions() -> Vec<Action> {
 	let table = ACTION_TABLE.read().await;
-	table.values().map(|a| a.clone()).collect()
+	table.values().cloned().collect()
 }
 
 async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error> {
 	let mut p = CFG_DIR_PATH.clone();
 	p.push("actions");
 
-	let v: Vec<Action> = table.values().map(|a| a.clone()).collect();
+	let v: Vec<Action> = table.values().cloned().collect();
 
 	tracing::debug!("actions dir {p:?}");
 
