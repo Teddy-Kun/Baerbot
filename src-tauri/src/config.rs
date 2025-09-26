@@ -8,7 +8,7 @@ use clap_config::ClapConfig;
 use serde::{Deserialize, Serialize};
 use twitch_oauth2::Scope;
 
-use crate::{error::Error, statics::CFG_DIR_PATH};
+use crate::{error::Error, utils::CFG_DIR_PATH};
 
 // global config
 pub static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);
