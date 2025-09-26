@@ -6,6 +6,7 @@ use tedbot_lib::{
 		self, TWITCH_CLIENT,
 		actions::Action,
 		auth::{forget_token, load_token},
+		chat::get_random_chatter,
 	},
 };
 
@@ -90,6 +91,12 @@ async fn remove_action(trigger: String) {
 	twitch::actions::drop_action(trigger.as_str()).await;
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn get_rand_chatter() -> Option<String> {
+	get_random_chatter().await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -101,6 +108,7 @@ pub fn run() {
 		get_all_actions,
 		add_action,
 		remove_action,
+		get_rand_chatter
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

@@ -1,6 +1,9 @@
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
-use tauri::async_runtime::{JoinHandle, spawn};
+use indexmap::IndexMap;
+use rand::Rng;
+use tauri::async_runtime::{JoinHandle, spawn, spawn_blocking};
+use tokio::sync::Mutex;
 use twitch_irc::{
 	ClientConfig, SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials,
 	message::ServerMessage,
@@ -8,14 +11,17 @@ use twitch_irc::{
 
 use crate::{
 	error::{Error, ErrorMsg},
-	statics::NAME_CAPITALIZED,
 	twitch::{
 		TwitchClient,
 		actions::{self, Exec},
 	},
+	utils::{NAME_CAPITALIZED, get_unix},
 };
 
 type IrcClient = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
+
+static ACTIVE_CHATTERS: LazyLock<Mutex<IndexMap<String, u64>>> =
+	LazyLock::new(|| Mutex::new(IndexMap::new()));
 
 pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandle<()>, Error> {
 	tracing::debug!("Awaiting global twitch client read access");
@@ -51,7 +57,7 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 				Some(msg) => {
 					let clone = client.clone();
 					let username_clone = username.clone();
-					spawn(async move {
+					spawn_blocking(async move || {
 						if let Err(e) = handle_msg(msg, clone.as_ref(), username_clone).await {
 							tracing::error!("Error handling chat msg {e}");
 						};
@@ -64,6 +70,37 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 	Ok(join_handle)
 }
 
+fn register_active_chatter(name: String) {
+	let unix = get_unix();
+	spawn(async move {
+		let mut active_chatters = ACTIVE_CHATTERS.lock().await;
+		active_chatters.insert(name, unix);
+	});
+}
+
+pub async fn is_chatter_active(name: &str) -> bool {
+	let unix = get_unix();
+	let mut active_chatters = ACTIVE_CHATTERS.lock().await;
+	// remove all chatters that are no longer active
+	// they count as active if they have chatted in the last 5m
+	active_chatters.retain(|_, time| (*time - unix) > 5 * 60);
+	active_chatters.contains_key(name)
+}
+
+pub async fn get_random_chatter() -> Option<String> {
+	let unix = get_unix();
+	let mut active_chatters = ACTIVE_CHATTERS.lock().await;
+	active_chatters.retain(|_, time| (*time - unix) > 5 * 60);
+
+	if active_chatters.is_empty() {
+		return None;
+	}
+
+	let mut rng = rand::rng();
+	let i = rng.random_range(0..active_chatters.len());
+	active_chatters.get_index(i).map(|(s, _)| s).cloned()
+}
+
 async fn handle_msg(
 	server_msg: ServerMessage,
 	client: &IrcClient,
@@ -72,6 +109,12 @@ async fn handle_msg(
 	tracing::debug!("Message received: {:?}", server_msg.source().params);
 
 	let params = &server_msg.source().params;
+
+	if params.is_empty() {
+		return Ok(());
+	}
+
+	register_active_chatter(params[0].clone());
 
 	if params.len() != 2 {
 		return Ok(());

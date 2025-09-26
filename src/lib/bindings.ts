@@ -33,6 +33,9 @@ async addAction(action: Action) : Promise<void> {
 },
 async removeAction(trigger: string) : Promise<void> {
     await TAURI_INVOKE("remove_action", { trigger });
+},
+async getRandChatter() : Promise<string | null> {
+    return await TAURI_INVOKE("get_rand_chatter");
 }
 }
 
