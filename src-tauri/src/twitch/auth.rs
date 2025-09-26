@@ -4,10 +4,10 @@ use std::{
 	io::Write,
 };
 use tokio::time::sleep;
-use twitch_oauth2::{AccessToken, ClientId, DeviceUserTokenBuilder, Scope, UserToken};
+use twitch_oauth2::{AccessToken, ClientId, DeviceUserTokenBuilder, UserToken};
 
 use crate::{
-	config::ARGS,
+	config::{ARGS, DEFAULT_CACHE},
 	error::{Error, ErrorMsg},
 	twitch::TwitchClient,
 };
@@ -32,9 +32,8 @@ pub async fn twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
 
 async fn internal_twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
 	let client_id = ClientId::new("15xr4zw5ue7jxpbvt0jwwrwywqch9a".to_string());
-	let scopes = vec![Scope::ChatEdit, Scope::ChatRead];
 
-	let mut builder = DeviceUserTokenBuilder::new(client_id, scopes);
+	let mut builder = DeviceUserTokenBuilder::new(client_id, DEFAULT_CACHE.scopes.clone());
 	let code = builder.start(&client.client).await?;
 
 	tracing::debug!("code: {:#?}", code);
