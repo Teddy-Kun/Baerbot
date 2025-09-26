@@ -77,5 +77,6 @@ incremental = true
 
 [profile.release]
 codegen-units = 1
-lto = "thin"
+# lto = "thin"
+lto = true
 strip = true
