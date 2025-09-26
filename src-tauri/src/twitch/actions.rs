@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::async_runtime::RwLock;
 
-use crate::{error::Error, statics::CFG_DIR_PATH, twitch::counter::TwitchCounter};
+use crate::{error::Error, twitch::counter::TwitchCounter, utils::CFG_DIR_PATH};
 
 static ACTION_TABLE: LazyLock<RwLock<HashMap<ArcStr, Action>>> = LazyLock::new(|| {
 	let m = init_map().unwrap_or_default();
@@ -207,7 +207,7 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 	for action in v {
 		let mut p = p.clone();
 
-		let handle = tokio::spawn(async move {
+		let handle = tokio::task::spawn_blocking(async move || {
 			p.push(format!("{}.toml", action.trigger.deref()));
 
 			tracing::info!("action path {p:?}");
