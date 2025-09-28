@@ -22,7 +22,7 @@
 
 	function add_action(): void {
 		let action: Action = {
-			trigger: { Command: command },
+			trigger: { Command: command.toLowerCase() },
 			exec: { ChatMsg: response },
 		};
 		commands.addAction(action).then(update_actions);
