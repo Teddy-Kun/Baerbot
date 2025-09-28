@@ -1,11 +1,11 @@
-import js from '@eslint/js';
-import { includeIgnoreFile } from '@eslint/compat';
-import svelte from 'eslint-plugin-svelte';
-import globals from 'globals';
-import { fileURLToPath } from 'node:url';
-import ts from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
-import stylistic from '@stylistic/eslint-plugin'
+import js from "@eslint/js";
+import { includeIgnoreFile } from "@eslint/compat";
+import svelte from "eslint-plugin-svelte";
+import globals from "globals";
+import { fileURLToPath } from "node:url";
+import ts from "typescript-eslint";
+import svelteConfig from "./svelte.config.js";
+import stylistic from "@stylistic/eslint-plugin";
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 
 export default ts.config(
@@ -17,9 +17,9 @@ export default ts.config(
 		languageOptions: {
 			globals: {
 				...globals.browser,
-				...globals.node
-			}
-		}
+				...globals.node,
+			},
+		},
 	},
 	{
 		files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
@@ -27,14 +27,14 @@ export default ts.config(
 		languageOptions: {
 			parserOptions: {
 				projectService: true,
-				extraFileExtensions: ['.svelte'],
+				extraFileExtensions: [".svelte"],
 				parser: ts.parser,
-				svelteConfig
-			}
+				svelteConfig,
+			},
 		},
 
 		plugins: {
-			'@stylistic': stylistic,
+			"@stylistic": stylistic,
 		},
 
 		rules: {
@@ -66,9 +66,10 @@ export default ts.config(
 					indent: "tab",
 				},
 			],
-		}
+			"svelte/no-at-html-tags": "off", // they are fine, we run local and I need it for the ansi-to-html conversion
+		},
 	},
 	{
-		ignores: ['**/*/bindings.ts']
-	}
+		ignores: ["**/*/bindings.ts"],
+	},
 );
