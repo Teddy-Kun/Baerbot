@@ -3,9 +3,19 @@
 	import Button from "./ui/button/button.svelte";
 	import SunIcon from "@lucide/svelte/icons/sun";
 	import MoonIcon from "@lucide/svelte/icons/moon";
-	import { toggleMode } from "mode-watcher";
 	import * as Tabs from "./ui/tabs";
 	import store from "$lib/store.svelte";
+	import { commands } from "$lib/bindings";
+	import { toggle_theme } from "$lib/utils";
+	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
+
+	function logout(): void {
+		commands.logout().then(() => {
+			store.username = null;
+			goto(resolve("/login"));
+		});
+	}
 </script>
 
 <Sidebar.Root>
@@ -25,9 +35,11 @@
 		</Tabs.Root>
 	</Sidebar.Content>
 	<Sidebar.Footer>
+		<Button onclick={commands.debug}>DEBUG</Button>
+		<Button onclick={logout}>Logout</Button>
 		<Button
 			class="w-full px-2"
-			onclick={toggleMode}
+			onclick={toggle_theme}
 			variant="outline"
 			size="icon"
 		>

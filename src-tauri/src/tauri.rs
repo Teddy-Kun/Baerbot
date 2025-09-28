@@ -63,6 +63,7 @@ async fn is_logged_in() -> Option<String> {
 #[tauri::command]
 #[specta::specta]
 async fn logout() {
+	TWITCH_CLIENT.write().await.forget_token();
 	if let Err(e) = forget_token().await {
 		tracing::error!("Error logging out: {e}");
 	}
@@ -126,12 +127,18 @@ fn get_current_logs() -> Vec<Box<str>> {
 	};
 	logs.split('\n')
 		.map_while(|s| {
-			if s.len() == 0 {
+			if s.is_empty() {
 				return None;
 			}
 			Some(Box::from(s))
 		})
 		.collect()
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn debug() {
+	// TWITCH_CLIENT.read().await.get_redeems().await;
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -147,7 +154,8 @@ pub fn run() {
 		remove_action,
 		get_rand_chatter,
 		open_log_dir,
-		get_current_logs
+		get_current_logs,
+		debug
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

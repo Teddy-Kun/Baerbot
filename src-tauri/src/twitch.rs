@@ -91,6 +91,17 @@ impl TwitchClient {
 		};
 	}
 
+	pub fn forget_token(&mut self) {
+		if let Some(handler) = &self.chat_listener {
+			handler.abort();
+		}
+		self.chat_listener = None;
+		self.token = None;
+		self.user_info = None;
+		self.websocket_id = None;
+		self.redeems = None;
+	}
+
 	pub fn get_redeems(&self) -> Option<&[CustomReward]> {
 		match &self.redeems {
 			None => None,
