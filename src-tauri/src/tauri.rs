@@ -8,7 +8,10 @@ use tedbot_lib::{
 		auth::{forget_token, load_token},
 		chat::get_random_chatter,
 	},
+	utils::CFG_DIR_PATH,
 };
+
+use crate::logs;
 
 #[tauri::command]
 #[specta::specta]
@@ -99,12 +102,29 @@ async fn get_rand_chatter() -> Option<String> {
 
 #[tauri::command]
 #[specta::specta]
-fn open_log_dir() {}
+fn open_log_dir() -> Result<(), String> {
+	let p = CFG_DIR_PATH.join("logs");
+	if let Err(e) = open::that(p) {
+		return Err(e.to_string());
+	}
+
+	Ok(())
+}
 
 #[tauri::command]
 #[specta::specta]
-fn get_current_logs() -> Vec<String> {
-	(1..1001).map(|n| n.to_string()).collect()
+fn get_current_logs() -> Vec<Box<str>> {
+	let logs = match logs::get_latest_log_file() {
+		Err(e) => {
+			tracing::error!("Couldn't get latest log file {e}");
+			return Vec::new();
+		}
+		Ok(v) => match v {
+			None => return Vec::new(),
+			Some(l) => l,
+		},
+	};
+	logs.split('\n').map(Box::from).collect()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

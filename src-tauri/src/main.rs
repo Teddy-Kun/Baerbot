@@ -4,25 +4,15 @@
 use std::ops::Deref;
 
 use tedbot_lib::{
-	config::{ARGS, Cache, DEFAULT_CACHE},
+	config::{Cache, DEFAULT_CACHE},
 	twitch,
 };
-use tracing::Level;
 
+mod logs;
 mod tauri;
 
 fn main() {
-	let dbg = ARGS.debug;
-
-	let lvl = match dbg {
-		true => Level::DEBUG,
-		false => Level::INFO,
-	};
-
-	let sub = tracing_subscriber::fmt().with_max_level(lvl).finish();
-	if let Err(err) = tracing::subscriber::set_global_default(sub) {
-		eprintln!("Error setting up logger: {}", err)
-	}
+	logs::setup_logging();
 
 	let def_cache = DEFAULT_CACHE.deref();
 	if let Ok(disk_cache) = Cache::read()

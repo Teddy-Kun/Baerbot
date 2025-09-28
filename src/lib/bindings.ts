@@ -37,8 +37,13 @@ async removeAction(trigger: string) : Promise<void> {
 async getRandChatter() : Promise<string | null> {
     return await TAURI_INVOKE("get_rand_chatter");
 },
-async openLogDir() : Promise<void> {
-    await TAURI_INVOKE("open_log_dir");
+async openLogDir() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_log_dir") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
 async getCurrentLogs() : Promise<string[]> {
     return await TAURI_INVOKE("get_current_logs");

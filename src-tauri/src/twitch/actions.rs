@@ -193,9 +193,7 @@ pub async fn get_all_actions() -> Vec<Action> {
 }
 
 async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error> {
-	let mut p = CFG_DIR_PATH.clone();
-	p.push("actions");
-
+	let p = CFG_DIR_PATH.join("actions");
 	let v: Vec<Action> = table.values().cloned().collect();
 
 	tracing::debug!("actions dir {p:?}");
@@ -237,8 +235,7 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 }
 
 fn delete_action_from_fs(key: &str) -> Result<(), Error> {
-	let mut p = CFG_DIR_PATH.clone();
-	p.push("actions");
+	let p = CFG_DIR_PATH.join("actions");
 
 	if p.is_dir() {
 		for entry in read_dir(&p)? {
@@ -261,8 +258,7 @@ fn delete_action_from_fs(key: &str) -> Result<(), Error> {
 fn init_map() -> Result<HashMap<ArcStr, Action>, Error> {
 	let mut m = HashMap::new();
 
-	let mut p = CFG_DIR_PATH.clone();
-	p.push("actions");
+	let p = CFG_DIR_PATH.join("actions");
 
 	if p.is_dir() {
 		for entry in read_dir(&p)? {

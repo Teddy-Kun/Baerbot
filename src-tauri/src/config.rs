@@ -35,16 +35,14 @@ pub struct Cache {
 
 impl Cache {
 	pub fn save(&self) -> Result<(), Error> {
-		let mut p = CFG_DIR_PATH.clone();
-		p.push("cache.toml");
+		let p = CFG_DIR_PATH.join("cache.toml");
 		let s = toml::to_string_pretty(self)?;
 		fs::write(p, s)?;
 		Ok(())
 	}
 
 	pub fn read() -> Result<Self, Error> {
-		let mut p = CFG_DIR_PATH.clone();
-		p.push("cache.toml");
+		let p = CFG_DIR_PATH.join("cache.toml");
 		let s = fs::read_to_string(p)?;
 		let c = toml::from_str(s.as_str())?;
 		Ok(c)
