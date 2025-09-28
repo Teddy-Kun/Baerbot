@@ -32,10 +32,13 @@
 		return Object.keys(trigger)[0];
 	}
 
-	function get_trigger_inner(trigger: Trigger): string {
+	function get_trigger_inner(
+		trigger: Trigger,
+		add_cmd_exclamation = true,
+	): string {
 		let key = Object.keys(trigger)[0] as keyof Trigger;
 
-		if (key == "Command") return `!${trigger[key]}`;
+		if (add_cmd_exclamation && key == "Command") return `!${trigger[key]}`;
 
 		return trigger[key];
 	}
@@ -51,7 +54,7 @@
 
 	function remove_action(action: Action): void {
 		commands
-			.removeAction(get_trigger_inner(action.trigger))
+			.removeAction(get_trigger_inner(action.trigger, false))
 			.then(update_actions);
 	}
 
