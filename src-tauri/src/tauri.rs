@@ -97,6 +97,16 @@ async fn get_rand_chatter() -> Option<String> {
 	get_random_chatter().await
 }
 
+#[tauri::command]
+#[specta::specta]
+fn open_log_dir() {}
+
+#[tauri::command]
+#[specta::specta]
+fn get_current_logs() -> Vec<String> {
+	(1..1001).map(|n| n.to_string()).collect()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -108,7 +118,9 @@ pub fn run() {
 		get_all_actions,
 		add_action,
 		remove_action,
-		get_rand_chatter
+		get_rand_chatter,
+		open_log_dir,
+		get_current_logs
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
