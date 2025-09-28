@@ -47,6 +47,9 @@ async openLogDir() : Promise<Result<null, string>> {
 },
 async getCurrentLogs() : Promise<string[]> {
     return await TAURI_INVOKE("get_current_logs");
+},
+async debug() : Promise<void> {
+    await TAURI_INVOKE("debug");
 }
 }
 
@@ -62,7 +65,7 @@ async getCurrentLogs() : Promise<string[]> {
 
 export type Action = { trigger: Trigger; exec: Exec }
 export type ColorSchemeAccent = { hue: number; saturation: number; luminance: number; hex_code: string }
-export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn"
+export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn" | "WebSocketSetup"
 export type Exec = { ChatMsg: string } | { Reply: string } | { Counter: InnerCounter }
 export type InnerCounter = { counter: number; template: string }
 export type Trigger = { Command: string } | { Redeem: string }

@@ -4,7 +4,7 @@
 	import RefreshIcon from "@lucide/svelte/icons/refresh-cw";
 	import * as Sidebar from "./ui/sidebar/index";
 	import { commands } from "../bindings";
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import VirtualScroll from "svelte-virtual-scroll-list";
 	import Convert from "ansi-to-html";
 
@@ -43,11 +43,18 @@
 			if (res.length === logs.length) return;
 
 			const logBuf: Log[] = [];
-			for (let i = res.length - 1; i >= 0; i--) {
-				logBuf.push({
-					id: i,
-					text: res[i],
-				});
+			let i = -1;
+			for (const log of res) {
+				console.log(log.charAt(0), log);
+				if (log.startsWith("\u001b[2m2")) {
+					i++;
+					logBuf.push({
+						id: i,
+						text: log,
+					});
+				} else {
+					logBuf[i].text += "\n" + log;
+				}
 			}
 			logs = logBuf;
 		});
@@ -62,15 +69,21 @@
 		commands.openLogDir();
 	}
 
+	let interval: number | undefined;
+
 	onMount(() => {
 		get_logs();
-		setInterval(() => {
+		interval = setInterval(() => {
 			refresh_timer--;
 			if (refresh_timer == 0) {
 				refresh_timer = 5;
 				get_logs();
 			}
 		}, 1000);
+	});
+
+	onDestroy(() => {
+		if (interval !== undefined) clearInterval(interval);
 	});
 </script>
 
@@ -92,7 +105,9 @@
 			</Button>
 		</span>
 	</header>
-	<code class="flex flex-col flex-1 rounded-md bg-muted p-4 overflow-auto">
+	<code
+		class="flex flex-reverse flex-1 rounded-md bg-muted p-4 overflow-auto [&>div]:w-full"
+	>
 		<VirtualScroll
 			data={logs}
 			key="id"
@@ -101,7 +116,7 @@
 			keeps={75}
 		>
 			<p
-				class="mb-4 pl-10 p-2 -indent-8 hover:bg-muted-foreground/15 rounded-md"
+				class="mb-4 pl-10 p-2 -indent-8 hover:bg-muted-foreground/15 rounded-md whitespace-pre-line"
 			>
 				{@html ansi_converter.toHtml(data.text)}
 			</p>
