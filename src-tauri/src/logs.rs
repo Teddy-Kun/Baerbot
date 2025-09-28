@@ -20,84 +20,8 @@ static LOG_NAME: LazyLock<Box<str>> = LazyLock::new(|| {
 	log_name.into_boxed_str()
 });
 
-pub fn setup_logging() {
-	let dbg = ARGS.debug;
-
-	let lvl = match dbg {
-		true => Level::DEBUG,
-		false => Level::INFO,
-	};
-
-	let stdout = std::io::stdout.with_max_level(tracing::Level::DEBUG);
-	let roller = tracing_appender::rolling::hourly(LOG_PATH.as_path(), LOG_NAME.as_ref());
-
-	let sub = tracing_subscriber::fmt()
-		.with_writer(stdout.and(roller))
-		.with_max_level(lvl)
-		.finish();
-	if let Err(err) = tracing::subscriber::set_global_default(sub) {
-		eprintln!("Error setting up logger: {}", err)
-	}
-}
-
-const SECONDS_PER_HOUR: i64 = 60 * 60;
-const SECONDS_PER_DAY: i64 = SECONDS_PER_HOUR * 24;
-const SECONDS_PER_MONTH: i64 = 2629800; // SECONDS_PER_DAY * 30.4375 || Average of days per month with February having 28.25 days
-const SECONDS_PER_YEAR: i64 = 31557600; // SECONDS_PER_DAY * 365.25
-
-/// Converts a filename.yyyy-MM-dd-HH into a unix timestamp.
-/// Its not 100% accurate, since it uses averages for seconds per month/year, but its enough for sorting
-fn log_name_to_unix(name: &str) -> Option<i64> {
-	let v: Vec<&str> = name.split('.').collect();
-	if v.len() != 2 {
-		return None;
-	}
-
-	if *unsafe { v.get_unchecked(0) } != LOG_NAME.as_ref() {
-		return None;
-	}
-
-	// guaranteed safe, since v.len is exactly 2 here
-	let maybe_date = *unsafe { v.get_unchecked(1) };
-	let split_date: Vec<&str> = maybe_date.split('-').collect();
-
-	if split_date.len() != 4 {
-		return None;
-	}
-
-	let year = *unsafe { split_date.get_unchecked(0) };
-	let month = *unsafe { split_date.get_unchecked(1) };
-	let day = *unsafe { split_date.get_unchecked(2) };
-	let hour = *unsafe { split_date.get_unchecked(3) };
-
-	let mut unix: i64;
-	match year.parse::<i64>() {
-		Ok(y) => unix = (y - 1970) * SECONDS_PER_YEAR,
-		Err(_) => return None,
-	}
-
-	match month.parse::<i64>() {
-		Ok(m) => unix += m * SECONDS_PER_MONTH,
-		Err(_) => return None,
-	}
-
-	match day.parse::<i64>() {
-		Ok(d) => unix += d * SECONDS_PER_DAY,
-		Err(_) => return None,
-	}
-
-	match hour.parse::<i64>() {
-		Ok(h) => unix += h * SECONDS_PER_HOUR,
-		Err(_) => return None,
-	}
-
-	Some(unix)
-}
-
-pub fn get_latest_log_file() -> Result<Option<String>, Error> {
-	let dir = read_dir(LOG_PATH.as_path())?;
-
-	tracing::debug!("GOT DIR");
+static CURRENT_LOG_FILE: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
+	let dir = read_dir(LOG_PATH.as_path()).ok()?;
 
 	struct LogFile {
 		name: String,
@@ -133,11 +57,83 @@ pub fn get_latest_log_file() -> Result<Option<String>, Error> {
 		}
 	}
 
-	match latest_file {
+	let p = LOG_PATH.join(latest_file?.name);
+	Some(p)
+});
+
+pub fn setup_logging() {
+	let dbg = ARGS.debug;
+
+	let lvl = match dbg {
+		true => Level::DEBUG,
+		false => Level::INFO,
+	};
+
+	let stdout = std::io::stdout.with_max_level(tracing::Level::DEBUG);
+	let roller = tracing_appender::rolling::daily(LOG_PATH.as_path(), LOG_NAME.as_ref());
+
+	let sub = tracing_subscriber::fmt()
+		.with_writer(stdout.and(roller))
+		.with_max_level(lvl)
+		.finish();
+	if let Err(err) = tracing::subscriber::set_global_default(sub) {
+		eprintln!("Error setting up logger: {}", err)
+	}
+}
+
+/// Converts a filename.yyyy-MM-dd into a unix timestamp.
+/// Its not 100% accurate, since it uses averages for seconds per month/year, but its enough for sorting
+fn log_name_to_unix(name: &str) -> Option<i64> {
+	const SECONDS_PER_DAY: i64 = 60 * 60 * 24;
+	const SECONDS_PER_MONTH: i64 = 2629800; // SECONDS_PER_DAY * 30.4375 || Average of days per month with February having 28.25 days
+	const SECONDS_PER_YEAR: i64 = 31557600; // SECONDS_PER_DAY * 365.25
+
+	let v: Vec<&str> = name.split('.').collect();
+	if v.len() != 2 {
+		return None;
+	}
+
+	if *unsafe { v.get_unchecked(0) } != LOG_NAME.as_ref() {
+		return None;
+	}
+
+	// guaranteed safe, since v.len is exactly 2 here
+	let maybe_date = *unsafe { v.get_unchecked(1) };
+	let split_date: Vec<&str> = maybe_date.split('-').collect();
+
+	if split_date.len() != 3 {
+		return None;
+	}
+
+	let year = *unsafe { split_date.get_unchecked(0) };
+	let month = *unsafe { split_date.get_unchecked(1) };
+	let day = *unsafe { split_date.get_unchecked(2) };
+
+	let mut unix: i64;
+	match year.parse::<i64>() {
+		Ok(y) => unix = (y - 1970) * SECONDS_PER_YEAR,
+		Err(_) => return None,
+	}
+
+	match month.parse::<i64>() {
+		Ok(m) => unix += m * SECONDS_PER_MONTH,
+		Err(_) => return None,
+	}
+
+	match day.parse::<i64>() {
+		Ok(d) => unix += d * SECONDS_PER_DAY,
+		Err(_) => return None,
+	}
+
+	Some(unix)
+}
+
+pub fn get_latest_log() -> Result<Option<String>, Error> {
+	let p = CURRENT_LOG_FILE.as_ref();
+	match p {
 		None => Ok(None),
-		Some(f) => {
-			let f_path = LOG_PATH.join(f.name);
-			let res = read_to_string(f_path)?;
+		Some(p) => {
+			let res = read_to_string(p)?;
 			Ok(Some(res))
 		}
 	}

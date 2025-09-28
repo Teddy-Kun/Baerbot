@@ -8,7 +8,7 @@ use tedbot_lib::{
 		auth::{forget_token, load_token},
 		chat::get_random_chatter,
 	},
-	utils::CFG_DIR_PATH,
+	utils::{CFG_DIR_PATH, NAME_CAPITALIZED},
 };
 
 use crate::logs;
@@ -114,7 +114,7 @@ fn open_log_dir() -> Result<(), String> {
 #[tauri::command]
 #[specta::specta]
 fn get_current_logs() -> Vec<Box<str>> {
-	let logs = match logs::get_latest_log_file() {
+	let logs = match logs::get_latest_log() {
 		Err(e) => {
 			tracing::error!("Couldn't get latest log file {e}");
 			return Vec::new();
@@ -155,6 +155,8 @@ pub fn run() {
 			.export(ts_settings, "../src/lib/bindings.ts")
 			.expect("Failed to export typescript bindings");
 	}
+
+	tracing::info!("{} started", NAME_CAPITALIZED.as_str());
 
 	tauri::Builder::default()
 		// .plugin(tauri_plugin_opener::init())
