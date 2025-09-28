@@ -4,13 +4,25 @@
 	import SunIcon from "@lucide/svelte/icons/sun";
 	import MoonIcon from "@lucide/svelte/icons/moon";
 	import { toggleMode } from "mode-watcher";
+	import * as Tabs from "./ui/tabs";
+	import store from "$lib/store.svelte";
 </script>
 
 <Sidebar.Root>
 	<Sidebar.Header />
 	<Sidebar.Content>
-		<Sidebar.Group />
-		<Sidebar.Group />
+		<Tabs.Root
+			bind:value={store.current_tab}
+			class="w-full px-2"
+			orientation="vertical"
+		>
+			<Tabs.List class="flex flex-col h-fit w-full">
+				<Tabs.Trigger class="w-full" value="actions">
+					Actions
+				</Tabs.Trigger>
+				<Tabs.Trigger class="w-full" value="logs">Logs</Tabs.Trigger>
+			</Tabs.List>
+		</Tabs.Root>
 	</Sidebar.Content>
 	<Sidebar.Footer>
 		<Button

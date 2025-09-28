@@ -5,6 +5,7 @@
 	import BotActions from "$lib/components/bot_actions.svelte";
 	import Chat from "$lib/components/chat.svelte";
 	import Hamster from "$lib/components/hamster.svelte";
+	import Logs from "$lib/components/logs.svelte";
 	import * as Resizable from "$lib/components/ui/resizable/index.js";
 	import store from "$lib/store.svelte";
 	import { onMount } from "svelte";
@@ -21,7 +22,11 @@
 	<Resizable.PaneGroup direction="horizontal">
 		<Resizable.Pane>
 			<div class="flex flex-col size-full p-4 gap-4">
-				<BotActions />
+				{#if store.current_tab === "actions"}
+					<BotActions />
+				{:else if store.current_tab === "logs"}
+					<Logs />
+				{/if}
 			</div>
 		</Resizable.Pane>
 		<Resizable.Handle />

@@ -11,6 +11,7 @@
 	} from "$lib/bindings";
 	import { onMount } from "svelte";
 	import Hamster from "./hamster.svelte";
+	import * as Sidebar from "./ui/sidebar/index";
 
 	let loading: boolean = $state(true);
 
@@ -65,6 +66,7 @@
 	onMount(update_actions);
 </script>
 
+<Sidebar.Trigger />
 {#if loading}
 	<Hamster />
 {:else}
