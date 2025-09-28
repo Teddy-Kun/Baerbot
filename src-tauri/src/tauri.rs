@@ -89,9 +89,9 @@ async fn add_action(action: Action) {
 
 #[tauri::command]
 #[specta::specta]
-async fn remove_action(trigger: String) {
+async fn remove_action(trigger: Box<str>) {
 	tracing::info!("Removing action: {trigger}");
-	twitch::actions::drop_action(trigger.as_str()).await;
+	twitch::actions::drop_action(trigger.as_ref()).await;
 }
 
 #[tauri::command]
@@ -124,7 +124,14 @@ fn get_current_logs() -> Vec<Box<str>> {
 			Some(l) => l,
 		},
 	};
-	logs.split('\n').map(Box::from).collect()
+	logs.split('\n')
+		.map_while(|s| {
+			if s.len() == 0 {
+				return None;
+			}
+			Some(Box::from(s))
+		})
+		.collect()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
