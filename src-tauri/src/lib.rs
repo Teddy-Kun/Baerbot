@@ -1,3 +1,5 @@
+#![feature(trim_prefix_suffix)]
+
 #[deny(clippy::unwrap_used)]
 pub mod config;
 pub mod error;

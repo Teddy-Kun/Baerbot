@@ -106,12 +106,26 @@ pub enum Exec {
 }
 
 pub fn process_reply(s: &str) -> Cow<'_, str> {
-	let find_range = Regex::new(r"(\{\d\.\.\d\})+").unwrap();
+	let find_range = match Regex::new(r"(\{\d\.\.\d\})+") {
+		Ok(r) => r,
+		Err(e) => {
+			tracing::error!("Regex error {e}");
+			return s.into();
+		}
+	};
 	let mut rng = rand::rng();
 
 	find_range.replace_all(s, |caps: &regex::Captures| {
-		let start: i64 = caps[1].parse().unwrap();
-		let end: i64 = caps[2].parse().unwrap();
+		tracing::debug!("caps: {:?}", caps);
+
+		let s: Vec<&str> = caps[0]
+			.trim_prefix('{')
+			.trim_suffix('}')
+			.split("..")
+			.collect();
+
+		let start: i64 = s[0].parse().unwrap();
+		let end: i64 = s[1].parse().unwrap();
 		let num = rng.random_range(start..=end);
 		num.to_string()
 	})
@@ -193,7 +207,10 @@ pub async fn add_action(action: Action) {
 
 pub async fn drop_action(key: &str) {
 	let mut table = ACTION_TABLE.write().await;
-	table.remove(key);
+	match table.remove(key) {
+		Some(_) => tracing::debug!("removed action {key}"),
+		None => tracing::warn!("Action {key} was not found, nothing removed"),
+	}
 	// we keep the writing lock to ensure no other writes interrupt us
 	if let Err(e) = delete_action_from_fs(key) {
 		tracing::error!("Error deleting action from fs: {e}")
@@ -214,7 +231,6 @@ pub async fn get_all_actions() -> Vec<Action> {
 
 async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error> {
 	let p = CFG_DIR_PATH.join("actions");
-	let v: Vec<Action> = table.values().cloned().collect();
 
 	tracing::debug!("actions dir {p:?}");
 
@@ -222,10 +238,10 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 
 	let mut futures = FuturesUnordered::new();
 
-	for action in v {
+	for action in table.values().cloned() {
 		let mut p = p.clone();
 
-		let handle = tokio::task::spawn_blocking(async move || {
+		let handle = tokio::spawn(async move {
 			p.push(format!("{}.toml", action.trigger.deref()));
 
 			tracing::info!("action path {p:?}");
@@ -245,6 +261,12 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 		futures.push(handle);
 	}
 
+	tracing::debug!(
+		"Saving {} action{}",
+		futures.len(),
+		if futures.len() > 1 { "s" } else { "" }
+	);
+
 	while let Some(res) = futures.next().await {
 		if let Err(e) = res {
 			tracing::warn!("Couldn't save action file {e}");
@@ -257,6 +279,8 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 fn delete_action_from_fs(key: &str) -> Result<(), Error> {
 	let p = CFG_DIR_PATH.join("actions");
 
+	tracing::debug!("Trying to delete {key}.toml");
+
 	if p.is_dir() {
 		for entry in read_dir(&p)? {
 			let entry = entry?;
@@ -264,8 +288,9 @@ fn delete_action_from_fs(key: &str) -> Result<(), Error> {
 			let target_name = format!("{key}.toml");
 			if p.is_file()
 				&& let Some(filename) = p.file_name()
-				&& filename == target_name.as_str()
+				&& filename.to_ascii_lowercase() == target_name.as_str()
 			{
+				tracing::debug!("Found {filename:?}, removing...");
 				remove_file(&p)?;
 				break;
 			}

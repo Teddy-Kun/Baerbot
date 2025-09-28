@@ -2,7 +2,7 @@ use std::sync::{Arc, LazyLock};
 
 use indexmap::IndexMap;
 use rand::Rng;
-use tauri::async_runtime::{JoinHandle, spawn, spawn_blocking};
+use tauri::async_runtime::{JoinHandle, spawn};
 use tokio::sync::Mutex;
 use twitch_irc::{
 	ClientConfig, SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials,
@@ -13,7 +13,7 @@ use crate::{
 	error::{Error, ErrorMsg},
 	twitch::{
 		TwitchClient,
-		actions::{self, Exec},
+		actions::{Exec, get_action, process_reply},
 	},
 	utils::{NAME_CAPITALIZED, get_unix},
 };
@@ -57,7 +57,7 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 				Some(msg) => {
 					let clone = client.clone();
 					let username_clone = username.clone();
-					spawn_blocking(async move || {
+					spawn(async move {
 						if let Err(e) = handle_msg(msg, clone.as_ref(), username_clone).await {
 							tracing::error!("Error handling chat msg {e}");
 						};
@@ -130,7 +130,7 @@ async fn handle_msg(
 
 	let msg: Vec<&str> = msg.split(' ').collect();
 
-	let action = match actions::get_action(msg[0]).await {
+	let action = match get_action(msg[0].to_lowercase().as_str()).await {
 		Some(a) => a,
 		None => return Ok(()),
 	};
@@ -142,9 +142,13 @@ async fn handle_msg(
 	tracing::debug!("action: {action:?}");
 
 	match action.exec {
-		Exec::ChatMsg(msg) => _ = client.say(username, msg.to_string()).await,
+		Exec::ChatMsg(msg) => {
+			_ = client
+				.say(username, process_reply(msg.as_ref()).to_string())
+				.await
+		}
 		_ => {
-			// TODO
+			tracing::debug!("TODO exec: {:?}", action.exec)
 		}
 	};
 
