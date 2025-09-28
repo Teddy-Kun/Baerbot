@@ -1,5 +1,5 @@
 use std::{
-	borrow::Borrow,
+	borrow::{Borrow, Cow},
 	collections::HashMap,
 	fs::{self, OpenOptions, create_dir_all, read_dir, remove_file},
 	io::Write,
@@ -12,6 +12,8 @@ use std::{
 };
 
 use futures::{StreamExt, stream::FuturesUnordered};
+use rand::Rng;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::async_runtime::RwLock;
@@ -50,6 +52,12 @@ impl From<&str> for ArcStr {
 impl From<Arc<str>> for ArcStr {
 	fn from(value: Arc<str>) -> Self {
 		Self(value)
+	}
+}
+
+impl From<ArcStr> for Arc<str> {
+	fn from(value: ArcStr) -> Self {
+		value.0.clone()
 	}
 }
 
@@ -95,6 +103,18 @@ pub enum Exec {
 	ChatMsg(ArcStr),
 	Reply(ArcStr),
 	Counter(TwitchCounter),
+}
+
+pub fn process_reply(s: &str) -> Cow<'_, str> {
+	let find_range = Regex::new(r"(\{\d\.\.\d\})+").unwrap();
+	let mut rng = rand::rng();
+
+	find_range.replace_all(s, |caps: &regex::Captures| {
+		let start: i64 = caps[1].parse().unwrap();
+		let end: i64 = caps[2].parse().unwrap();
+		let num = rng.random_range(start..=end);
+		num.to_string()
+	})
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
