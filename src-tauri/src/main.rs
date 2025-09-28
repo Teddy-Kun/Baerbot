@@ -18,6 +18,7 @@ fn main() {
 	if let Ok(disk_cache) = Cache::read()
 		&& !def_cache.equal_scope(&disk_cache)
 	{
+		tracing::debug!("Changed scopes detected. Forgetting old token");
 		_ = twitch::auth::forget_token();
 	}
 

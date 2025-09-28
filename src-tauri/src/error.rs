@@ -2,7 +2,7 @@ use std::{error::Error as StdError, fmt::Display};
 
 use serde::Serialize;
 use specta::Type;
-use twitch_api::client::CompatError;
+use twitch_api::{client::CompatError, helix};
 use twitch_irc::{SecureTCPTransport, login::StaticLoginCredentials};
 use twitch_oauth2::tokens::errors::{DeviceUserTokenExchangeError, ValidationError};
 
@@ -19,6 +19,7 @@ pub enum ErrorMsg {
 	TokenGone,
 	ChatMsgSend,
 	AlreadyLoggedIn,
+	WebSocketSetup,
 }
 
 impl From<Error> for ErrorMsg {
@@ -136,6 +137,18 @@ impl From<twitch_irc::validate::Error> for Error {
 impl From<anyhow::Error> for Error {
 	fn from(value: anyhow::Error) -> Self {
 		Self::from_err(value, ErrorMsg::Unknown)
+	}
+}
+
+impl From<tokio_tungstenite::tungstenite::Error> for Error {
+	fn from(value: tokio_tungstenite::tungstenite::Error) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Unknown)
+	}
+}
+
+impl From<helix::ClientRequestError<reqwest::Error>> for Error {
+	fn from(value: helix::ClientRequestError<reqwest::Error>) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Unknown)
 	}
 }
 
