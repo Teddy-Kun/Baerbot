@@ -100,7 +100,9 @@
 			estimateSize={24}
 			keeps={75}
 		>
-			<p class="mb-4 pl-8 -indent-8">
+			<p
+				class="mb-4 pl-10 p-2 -indent-8 hover:bg-muted-foreground/15 rounded-md"
+			>
 				{@html ansi_converter.toHtml(data.text)}
 			</p>
 		</VirtualScroll>
