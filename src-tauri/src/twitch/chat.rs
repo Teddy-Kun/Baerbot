@@ -128,9 +128,14 @@ async fn handle_msg(
 
 	tracing::debug!("cmd attempt");
 
-	let msg: Vec<&str> = msg.split(' ').collect();
+	let mut split = msg.split(' ');
 
-	let action = match get_action(msg[0].to_lowercase().as_str()).await {
+	let msg = match split.next() {
+		None => return Ok(()),
+		Some(m) => m,
+	};
+
+	let action = match get_action(msg.to_lowercase().as_str()).await {
 		Some(a) => a,
 		None => return Ok(()),
 	};
