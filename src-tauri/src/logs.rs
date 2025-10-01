@@ -20,31 +20,6 @@ static LOG_NAME: LazyLock<Box<str>> = LazyLock::new(|| {
 	log_name.into_boxed_str()
 });
 
-struct LogFile {
-	name: String,
-	date: i64,
-}
-
-impl PartialEq for LogFile {
-	fn eq(&self, other: &Self) -> bool {
-		self.date == other.date
-	}
-}
-
-impl Eq for LogFile {}
-
-impl PartialOrd for LogFile {
-	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-		self.date.partial_cmp(&other.date)
-	}
-}
-
-impl Ord for LogFile {
-	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-		self.date.cmp(&other.date)
-	}
-}
-
 static CURRENT_LOG_FILE: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 	let dir = read_dir(LOG_PATH.as_path()).ok()?;
 
@@ -53,13 +28,10 @@ static CURRENT_LOG_FILE: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 		.filter_map(|entry| {
 			let filename = entry.file_name().into_string().ok()?;
 
-			Some(LogFile {
-				date: log_name_to_unix(filename.as_str())?,
-				name: filename,
-			})
+			Some((log_name_to_unix(filename.as_str())?, filename))
 		})
-		.max()
-		.map(|latest_file| LOG_PATH.join(latest_file.name))?;
+		.max_by_key(|(date, _)| *date)
+		.map(|(_, filename)| LOG_PATH.join(filename))?;
 	Some(p)
 });
 
