@@ -11,7 +11,6 @@ use std::{
 	time::{SystemTime, UNIX_EPOCH},
 };
 
-use futures::{StreamExt, stream::FuturesUnordered};
 use rand::Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -236,65 +235,77 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 
 	create_dir_all(&p)?;
 
-	let mut futures = FuturesUnordered::new();
-
-	for action in table.values().cloned() {
+	let errs = table.values().filter_map(|action| {
 		let mut p = p.clone();
 
-		let handle = tokio::spawn(async move {
-			p.push(format!("{}.toml", action.trigger.deref()));
+		p.push(format!("{}.toml", action.trigger.deref()));
 
-			tracing::info!("action path {p:?}");
+		tracing::info!("action path {p:?}");
 
-			let s = toml::to_string_pretty(&action)?;
+		let s = match toml::to_string_pretty(&action) {
+			Ok(s) => s,
+			Err(e) => {
+				let e: Error = e.into();
+				return Some(e);
+			}
+		};
 
-			let mut f = OpenOptions::new()
-				.create(true)
-				.write(true)
-				.truncate(true)
-				.open(p)?;
-			f.write_all(s.as_bytes())?;
+		let mut f = match OpenOptions::new()
+			.create(true)
+			.write(true)
+			.truncate(true)
+			.open(p)
+		{
+			Ok(f) => f,
+			Err(e) => {
+				let e: Error = e.into();
+				return Some(e);
+			}
+		};
 
-			Ok::<(), Error>(())
-		});
-
-		futures.push(handle);
-	}
-
-	tracing::debug!(
-		"Saving {} action{}",
-		futures.len(),
-		if futures.len() > 1 { "s" } else { "" }
-	);
-
-	while let Some(res) = futures.next().await {
-		if let Err(e) = res {
-			tracing::warn!("Couldn't save action file {e}");
+		match f.write_all(s.as_bytes()) {
+			Ok(_) => None,
+			Err(e) => {
+				let e: Error = e.into();
+				Some(e)
+			}
 		}
-	}
+	});
+
+	errs.for_each(|e| {
+		tracing::warn!("Couldn't save action file {e}");
+	});
 
 	Ok(())
 }
 
 fn delete_action_from_fs(key: &str) -> Result<(), Error> {
-	let p = CFG_DIR_PATH.join("actions");
+	let path = CFG_DIR_PATH.join("actions");
 
-	tracing::debug!("Trying to delete {key}.toml");
+	let target_name = format!("{key}.toml");
+	tracing::debug!("Trying to delete {target_name}");
 
-	if p.is_dir() {
-		for entry in read_dir(&p)? {
-			let entry = entry?;
-			let p = entry.path();
-			let target_name = format!("{key}.toml");
-			if p.is_file()
-				&& let Some(filename) = p.file_name()
-				&& filename.to_ascii_lowercase() == target_name.as_str()
-			{
-				tracing::debug!("Found {filename:?}, removing...");
-				remove_file(&p)?;
-				break;
+	let count = read_dir(&path)?
+		.filter_map(Result::ok)
+		.map(|entry| entry.path())
+		.filter(|path| {
+			path.is_file()
+				&& path
+					.file_name()
+					.and_then(|n| n.to_str())
+					.map(|n| n.eq_ignore_ascii_case(&target_name))
+					.unwrap_or(false)
+		})
+		.inspect(|path| {
+			tracing::debug!("Found {target_name}, removing...");
+			if let Err(e) = remove_file(path) {
+				tracing::error!("Error deleting action from fs: {e}")
 			}
-		}
+		})
+		.count();
+
+	if count == 0 {
+		tracing::warn!("File `{target_name}` not found in {:?}", path);
 	}
 
 	Ok(())
@@ -303,27 +314,27 @@ fn delete_action_from_fs(key: &str) -> Result<(), Error> {
 fn init_map() -> Result<HashMap<ArcStr, Action>, Error> {
 	let mut m = HashMap::new();
 
-	let p = CFG_DIR_PATH.join("actions");
+	let path = CFG_DIR_PATH.join("actions");
 
-	if p.is_dir() {
-		for entry in read_dir(&p)? {
-			let entry = entry?;
-			let p = entry.path();
-			if p.is_file()
-				&& let Some(extension) = p.extension()
-				&& extension == "toml"
-			{
-				let content = fs::read_to_string(p)?;
-				let action: Action = match toml::from_str(content.as_str()) {
-					Ok(a) => a,
-					Err(_) => continue,
-				};
-
-				let key = action.trigger.get_inner().clone();
-				m.insert(key, action);
-			}
-		}
-	}
+	read_dir(&path)?
+		.filter_map(Result::ok)
+		.map(|entry| entry.path())
+		.filter(|path| {
+			path.is_file()
+				&& path
+					.extension()
+					.and_then(|extension| extension.to_str())
+					.map(|extension| extension.eq_ignore_ascii_case("toml"))
+					.unwrap_or(false)
+		})
+		.filter_map(|path| {
+			let content = fs::read_to_string(&path).ok()?;
+			toml::from_str::<Action>(content.as_str()).ok()
+		})
+		.for_each(|action| {
+			let key = action.trigger.get_inner().clone();
+			m.insert(key, action);
+		});
 
 	Ok(m)
 }
