@@ -20,44 +20,46 @@ static LOG_NAME: LazyLock<Box<str>> = LazyLock::new(|| {
 	log_name.into_boxed_str()
 });
 
+struct LogFile {
+	name: String,
+	date: i64,
+}
+
+impl PartialEq for LogFile {
+	fn eq(&self, other: &Self) -> bool {
+		self.date == other.date
+	}
+}
+
+impl Eq for LogFile {}
+
+impl PartialOrd for LogFile {
+	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		self.date.partial_cmp(&other.date)
+	}
+}
+
+impl Ord for LogFile {
+	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+		self.date.cmp(&other.date)
+	}
+}
+
 static CURRENT_LOG_FILE: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 	let dir = read_dir(LOG_PATH.as_path()).ok()?;
 
-	struct LogFile {
-		name: String,
-		date: i64,
-	}
-	let mut latest_file: Option<LogFile> = None;
+	let p = dir
+		.filter_map(Result::ok)
+		.filter_map(|entry| {
+			let filename = entry.file_name().into_string().ok()?;
 
-	for entry in dir {
-		let entry = match entry {
-			Ok(e) => e,
-			Err(_) => continue,
-		};
-
-		let name = match entry.file_name().into_string() {
-			Ok(n) => n,
-			Err(_) => continue,
-		};
-
-		let unix = match log_name_to_unix(name.as_str()) {
-			Some(u) => u,
-			None => continue,
-		};
-
-		match &latest_file {
-			None => {
-				latest_file = Some(LogFile { name, date: unix });
-			}
-			Some(v) => {
-				if v.date < unix {
-					latest_file = Some(LogFile { name, date: unix });
-				}
-			}
-		}
-	}
-
-	let p = LOG_PATH.join(latest_file?.name);
+			Some(LogFile {
+				date: log_name_to_unix(filename.as_str())?,
+				name: filename,
+			})
+		})
+		.max()
+		.map(|latest_file| LOG_PATH.join(latest_file.name))?;
 	Some(p)
 });
 
@@ -88,26 +90,32 @@ fn log_name_to_unix(name: &str) -> Option<i64> {
 	const SECONDS_PER_MONTH: i64 = 2629800; // SECONDS_PER_DAY * 30.4375 || Average of days per month with February having 28.25 days
 	const SECONDS_PER_YEAR: i64 = 31557600; // SECONDS_PER_DAY * 365.25
 
-	let v: Vec<&str> = name.split('.').collect();
-	if v.len() != 2 {
+	// split the name into at max 3 parts
+	let mut parts = name.splitn(3, '.');
+	let filename = parts.next()?; // get filename & return on empty which should be impossible
+	let maybe_date = parts.next()?; // get date & return when we have only 1 element
+	let third = parts.next();
+
+	// since proper log filenames should be filename.date any third argument would mean its not a log file we created so we can skip right here
+	if third.is_some() {
 		return None;
 	}
 
-	if *unsafe { v.get_unchecked(0) } != LOG_NAME.as_ref() {
+	if filename != LOG_NAME.as_ref() {
+		// not a log we created, skip
 		return None;
 	}
 
-	// guaranteed safe, since v.len is exactly 2 here
-	let maybe_date = *unsafe { v.get_unchecked(1) };
-	let split_date: Vec<&str> = maybe_date.split('-').collect();
+	let mut split_date = maybe_date.splitn(4, '-');
 
-	if split_date.len() != 3 {
+	let year = split_date.next()?;
+	let month = split_date.next()?;
+	let day = split_date.next()?;
+	let fourth = split_date.next();
+
+	if fourth.is_some() {
 		return None;
 	}
-
-	let year = *unsafe { split_date.get_unchecked(0) };
-	let month = *unsafe { split_date.get_unchecked(1) };
-	let day = *unsafe { split_date.get_unchecked(2) };
 
 	let mut unix: i64;
 	match year.parse::<i64>() {
