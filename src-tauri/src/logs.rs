@@ -12,26 +12,24 @@ use tedbot_lib::{
 use tracing::Level;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
-static LOG_PATH: LazyLock<PathBuf> = LazyLock::new(|| CFG_DIR_PATH.join("logs"));
+static LOG_DIR: LazyLock<PathBuf> = LazyLock::new(|| CFG_DIR_PATH.join("logs"));
 
 static LOG_NAME: LazyLock<Box<str>> = LazyLock::new(|| {
-	let mut log_name = NAME.clone();
-	log_name += "_log";
+	let log_name = format!("{}_log", NAME);
 	log_name.into_boxed_str()
 });
 
 static CURRENT_LOG_FILE: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
-	let dir = read_dir(LOG_PATH.as_path()).ok()?;
+	let dir = read_dir(LOG_DIR.as_path()).ok()?;
 
 	let p = dir
 		.filter_map(Result::ok)
 		.filter_map(|entry| {
 			let filename = entry.file_name().into_string().ok()?;
-
 			Some((log_name_to_unix(filename.as_str())?, filename))
 		})
 		.max_by_key(|(date, _)| *date)
-		.map(|(_, filename)| LOG_PATH.join(filename))?;
+		.map(|(_, filename)| LOG_DIR.join(filename))?;
 	Some(p)
 });
 
@@ -44,7 +42,7 @@ pub fn setup_logging() {
 	};
 
 	let stdout = std::io::stdout.with_max_level(tracing::Level::DEBUG);
-	let roller = tracing_appender::rolling::daily(LOG_PATH.as_path(), LOG_NAME.as_ref());
+	let roller = tracing_appender::rolling::daily(LOG_DIR.as_path(), LOG_NAME.as_ref());
 
 	let sub = tracing_subscriber::fmt()
 		.with_writer(stdout.and(roller))
