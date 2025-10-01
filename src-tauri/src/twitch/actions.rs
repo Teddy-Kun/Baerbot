@@ -104,27 +104,17 @@ pub enum Exec {
 	Counter(TwitchCounter),
 }
 
+static FIND_RANGE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\{\d+\.\.\d+\})+").unwrap());
 pub fn process_reply(s: &str) -> Cow<'_, str> {
-	let find_range = match Regex::new(r"(\{\d\.\.\d\})+") {
-		Ok(r) => r,
-		Err(e) => {
-			tracing::error!("Regex error {e}");
-			return s.into();
-		}
-	};
 	let mut rng = rand::rng();
 
-	find_range.replace_all(s, |caps: &regex::Captures| {
+	FIND_RANGE.replace_all(s, |caps: &regex::Captures| {
 		tracing::debug!("caps: {:?}", caps);
 
-		let s: Vec<&str> = caps[0]
-			.trim_prefix('{')
-			.trim_suffix('}')
-			.split("..")
-			.collect();
+		let mut s = caps[0].trim_prefix('{').trim_suffix('}').split("..");
 
-		let start: i64 = s[0].parse().unwrap();
-		let end: i64 = s[1].parse().unwrap();
+		let start: i64 = s.next().unwrap().parse().unwrap();
+		let end: i64 = s.next().unwrap().parse().unwrap();
 		let num = rng.random_range(start..=end);
 		num.to_string()
 	})
