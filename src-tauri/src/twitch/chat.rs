@@ -8,7 +8,7 @@ use twitch_irc::{ClientConfig, login::StaticLoginCredentials, message::ServerMes
 
 use crate::{
 	error::{Error, ErrorMsg},
-	twitch::{IrcClient, TwitchClient, actions::get_action},
+	twitch::{IrcClient, TWITCH_CLIENT, TwitchClient, actions::get_action},
 	utils::{NAME_CAPITALIZED, get_unix},
 };
 
@@ -110,6 +110,16 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 	}
 
 	let (prefix, msg) = params[1].split_at(1);
+	let msg = msg.to_lowercase();
+
+	if msg.contains("cheap viewers") {
+		_ = TWITCH_CLIENT
+			.read()
+			.await
+			.ban_user(params[0].as_str(), "bot detected", None)
+			.await;
+		return Ok(());
+	}
 
 	if prefix != "!" {
 		return Ok(());
