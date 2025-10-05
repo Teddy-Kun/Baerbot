@@ -27,10 +27,9 @@ impl TwitchClient {
 			.get_all_custom_rewards(&info.id, false, user_token.as_ref())
 			.await?;
 
-		for redeem in &redeems {
-			tracing::debug!("redeem '{}: {}'", redeem.title, redeem.cost)
-		}
-
+		redeems
+			.iter()
+			.for_each(|redeem| tracing::debug!("redeem '{}: {}'", redeem.title, redeem.cost));
 		Ok(redeems)
 	}
 

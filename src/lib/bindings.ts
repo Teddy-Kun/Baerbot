@@ -48,6 +48,14 @@ async openLogDir() : Promise<Result<null, string>> {
 async getCurrentLogs() : Promise<string[]> {
     return await TAURI_INVOKE("get_current_logs");
 },
+async getRedeems() : Promise<Result<FrontendRedeem[], ErrorMsg>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_redeems") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async debug() : Promise<void> {
     await TAURI_INVOKE("debug");
 }
@@ -65,8 +73,9 @@ async debug() : Promise<void> {
 
 export type Action = { trigger: Trigger; exec: Exec }
 export type ColorSchemeAccent = { hue: number; saturation: number; luminance: number; hex_code: string }
-export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn" | "WebSocketSetup"
+export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn" | "WebSocketSetup" | "RedeemRequest"
 export type Exec = { ChatMsg: string } | { Reply: string } | { Counter: InnerCounter }
+export type FrontendRedeem = { id: string; color: string; name: string; cost: bigint }
 export type InnerCounter = { counter: number; template: string }
 export type Trigger = { Command: string } | { Redeem: string }
 

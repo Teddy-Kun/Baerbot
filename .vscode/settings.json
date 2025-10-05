@@ -1,22 +1,25 @@
 {
-    "svelte.enable-ts-plugin": true,
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "explicit"
-    },
-    "files.associations": {
-        "*.css": "tailwindcss"
-    },
-    "editor.quickSuggestions": {
-        "strings": "on"
-    },
-    "editor.tabSize": 4,
-    "editor.indentSize": "tabSize",
-    "editor.detectIndentation": false,
-    "editor.insertSpaces": false,
-    "eslint.validate": [
-        "javascript",
-        "typescript",
-        "svelte"
-    ],
+	"svelte.enable-ts-plugin": true,
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	},
+	"files.associations": {
+		"*.css": "tailwindcss"
+	},
+	"editor.quickSuggestions": {
+		"strings": "on"
+	},
+	"editor.tabSize": 4,
+	"editor.indentSize": "tabSize",
+	"editor.detectIndentation": false,
+	"editor.insertSpaces": false,
+	"eslint.validate": [
+		"javascript",
+		"typescript",
+		"svelte"
+	],
+	"rust-analyzer.cargo.extraEnv": {
+		"API_KEY": "ABC",
+	}
 }

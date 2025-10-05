@@ -20,6 +20,7 @@ pub enum ErrorMsg {
 	ChatMsgSend,
 	AlreadyLoggedIn,
 	WebSocketSetup,
+	RedeemRequest,
 }
 
 impl From<Error> for ErrorMsg {

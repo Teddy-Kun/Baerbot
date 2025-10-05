@@ -31,7 +31,7 @@ pub async fn twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
 }
 
 async fn internal_twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
-	let client_id = ClientId::new("15xr4zw5ue7jxpbvt0jwwrwywqch9a".to_string());
+	let client_id = ClientId::new(env!("API_KEY").to_string());
 
 	let mut builder = DeviceUserTokenBuilder::new(client_id, DEFAULT_CACHE.scopes.clone());
 	let code = builder.start(&client.client).await?;

@@ -3,19 +3,19 @@ alias r := run
 alias bw := build-win
 
 build:
-    bun tauri build --bundles deb,rpm -- -Z build-std
+    export $(cat .env | xargs) && bun tauri build --bundles deb,rpm -- -Z build-std
 
 run:
-    bun tauri dev -- -Z build-std -- -d
+    export $(cat .env | xargs) && bun tauri dev -- -Z build-std -- -d
 
 build-win:
-    bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc -- -Z build-std
+    export $(cat .env | xargs) && bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc -- -Z build-std
 
 test:
-    cd src-tauri && cargo test
+    export $(cat .env | xargs) && cd src-tauri && cargo test
 
 clean:
     rm -r build && cd src-tauri && cargo clean
 
 lint:
-    bun lint:fix && bun check && cd src-tauri && cargo clippy
+    export $(cat .env | xargs) && bun lint:fix && bun check && cd src-tauri && cargo clippy

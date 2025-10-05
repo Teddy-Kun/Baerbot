@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+use specta::Type;
 use tauri_specta::{Builder, collect_commands};
 use tedbot_lib::{
 	error::ErrorMsg,
@@ -135,6 +137,36 @@ fn get_current_logs() -> Vec<Box<str>> {
 		.collect()
 }
 
+#[derive(Debug, Deserialize, Serialize, Type)]
+struct FrontendRedeem {
+	id: String,
+	color: String,
+	name: String,
+	cost: usize,
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn get_redeems() -> Result<Vec<FrontendRedeem>, ErrorMsg> {
+	let res = TWITCH_CLIENT.read().await.update_redeems().await;
+	match res {
+		Err(mut e) => {
+			e = e.overwrite_msg(ErrorMsg::RedeemRequest);
+			tracing::error!("Error getting twitch redeems: {e}");
+			return Err(ErrorMsg::RedeemRequest);
+		}
+		Ok(redeems) => Ok(redeems
+			.into_iter()
+			.map(|red| FrontendRedeem {
+				color: red.background_color,
+				cost: red.cost,
+				id: red.id.to_string(),
+				name: red.title,
+			})
+			.collect()),
+	}
+}
+
 #[tauri::command]
 #[specta::specta]
 async fn debug() {
@@ -155,6 +187,7 @@ pub fn run() {
 		get_rand_chatter,
 		open_log_dir,
 		get_current_logs,
+		get_redeems,
 		debug
 	]);
 
