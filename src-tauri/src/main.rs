@@ -3,7 +3,7 @@
 
 use std::ops::Deref;
 
-use tedbot_lib::{
+use baerbot_lib::{
 	config::{Cache, DEFAULT_CACHE},
 	twitch,
 };

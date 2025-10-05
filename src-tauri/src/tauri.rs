@@ -1,7 +1,4 @@
-use serde::{Deserialize, Serialize};
-use specta::Type;
-use tauri_specta::{Builder, collect_commands};
-use tedbot_lib::{
+use baerbot_lib::{
 	error::ErrorMsg,
 	os_color::{ColorSchemeAccent, get_color_scheme},
 	twitch::{
@@ -12,6 +9,9 @@ use tedbot_lib::{
 	},
 	utils::{CFG_DIR_PATH, NAME_CAPITALIZED},
 };
+use serde::{Deserialize, Serialize};
+use specta::Type;
+use tauri_specta::{Builder, collect_commands};
 
 use crate::logs;
 

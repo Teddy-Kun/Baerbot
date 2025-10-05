@@ -4,7 +4,7 @@ use std::{
 	sync::LazyLock,
 };
 
-use tedbot_lib::{
+use baerbot_lib::{
 	config::ARGS,
 	error::Error,
 	utils::{CFG_DIR_PATH, NAME},
