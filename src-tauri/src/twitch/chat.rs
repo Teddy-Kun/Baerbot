@@ -4,21 +4,13 @@ use indexmap::IndexMap;
 use rand::Rng;
 use tauri::async_runtime::{JoinHandle, spawn};
 use tokio::sync::Mutex;
-use twitch_irc::{
-	ClientConfig, SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials,
-	message::ServerMessage,
-};
+use twitch_irc::{ClientConfig, login::StaticLoginCredentials, message::ServerMessage};
 
 use crate::{
 	error::{Error, ErrorMsg},
-	twitch::{
-		TwitchClient,
-		actions::{Exec, get_action, process_reply},
-	},
+	twitch::{IrcClient, TwitchClient, actions::get_action},
 	utils::{NAME_CAPITALIZED, get_unix},
 };
-
-type IrcClient = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
 static ACTIVE_CHATTERS: LazyLock<Mutex<IndexMap<String, u64>>> =
 	LazyLock::new(|| Mutex::new(IndexMap::new()));
@@ -40,13 +32,8 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 	let (mut incoming_msg, client) = IrcClient::new(client_config);
 
 	let client = Arc::new(client);
-	client.join(username.clone())?;
-	client
-		.say(
-			username.clone(),
-			format!("{} initialized! 🧸", NAME_CAPITALIZED.as_str()),
-		)
-		.await?;
+
+	twitch_client.chat_client = Some(client.clone());
 
 	let join_handle = spawn(async move {
 		tracing::debug!("Started chat listener");
@@ -55,10 +42,8 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 			match msg {
 				None => tracing::debug!("Received empty msg?"),
 				Some(msg) => {
-					let clone = client.clone();
-					let username_clone = username.clone();
 					spawn(async move {
-						if let Err(e) = handle_msg(msg, clone.as_ref(), username_clone).await {
+						if let Err(e) = handle_msg(msg).await {
 							tracing::error!("Error handling chat msg {e}");
 						};
 					});
@@ -66,6 +51,14 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 			}
 		}
 	});
+
+	client.join(username.clone())?;
+	client
+		.say(
+			username,
+			format!("{} initialized! 🧸", NAME_CAPITALIZED.as_str()),
+		)
+		.await?;
 
 	Ok(join_handle)
 }
@@ -101,11 +94,7 @@ pub async fn get_random_chatter() -> Option<String> {
 	active_chatters.get_index(i).map(|(s, _)| s).cloned()
 }
 
-async fn handle_msg(
-	server_msg: ServerMessage,
-	client: &IrcClient,
-	username: String,
-) -> Result<(), Error> {
+async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 	tracing::debug!("Message received: {:?}", server_msg.source().params);
 
 	let params = &server_msg.source().params;
@@ -146,16 +135,7 @@ async fn handle_msg(
 
 	tracing::debug!("action: {action:?}");
 
-	match action.exec {
-		Exec::ChatMsg(msg) => {
-			_ = client
-				.say(username, process_reply(msg.as_ref()).to_string())
-				.await
-		}
-		_ => {
-			tracing::debug!("TODO exec: {:?}", action.exec)
-		}
-	};
+	action.exec.exec().await;
 
 	Ok(())
 }

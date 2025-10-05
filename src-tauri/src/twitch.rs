@@ -5,6 +5,7 @@ use twitch_api::{
 	HelixClient,
 	helix::{points::CustomReward, users::User},
 };
+use twitch_irc::{SecureTCPTransport, TwitchIRCClient, login::StaticLoginCredentials};
 use twitch_oauth2::UserToken;
 
 use crate::twitch::chat::chat_listener;
@@ -16,12 +17,15 @@ pub mod counter;
 pub mod events;
 pub mod redeems;
 
+type IrcClient = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
+
 pub static TWITCH_CLIENT: LazyLock<Arc<RwLock<TwitchClient>>> =
 	LazyLock::new(|| Arc::new(RwLock::new(TwitchClient::new())));
 
 pub struct TwitchClient {
 	client: HelixClient<'static, reqwest::Client>,
 	token: Option<Arc<UserToken>>,
+	chat_client: Option<Arc<IrcClient>>,
 	chat_listener: Option<JoinHandle<()>>,
 	user_info: Option<User>,
 	websocket_id: Option<Box<str>>,
@@ -47,6 +51,7 @@ impl TwitchClient {
 		Self {
 			client: HelixClient::default(),
 			token: None,
+			chat_client: None,
 			chat_listener: None,
 			user_info: None,
 			websocket_id: None,

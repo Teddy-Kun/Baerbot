@@ -17,7 +17,11 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::async_runtime::RwLock;
 
-use crate::{error::Error, twitch::counter::TwitchCounter, utils::CFG_DIR_PATH};
+use crate::{
+	error::Error,
+	twitch::{TWITCH_CLIENT, counter::TwitchCounter},
+	utils::CFG_DIR_PATH,
+};
 
 static ACTION_TABLE: LazyLock<RwLock<HashMap<ArcStr, Action>>> = LazyLock::new(|| {
 	let m = init_map().unwrap_or_default();
@@ -104,8 +108,38 @@ pub enum Exec {
 	Counter(TwitchCounter),
 }
 
+impl Exec {
+	pub async fn exec(&self) {
+		let tw_client = TWITCH_CLIENT.read().await;
+		let username = match tw_client.get_username() {
+			None => {
+				tracing::error!("Username gone");
+				return;
+			}
+			Some(u) => u,
+		};
+		let client = tw_client.chat_client.clone();
+		drop(tw_client);
+
+		match self {
+			Exec::ChatMsg(msg) => match client {
+				None => tracing::error!("Chat client not set up"),
+				Some(client) => {
+					if let Err(e) = client
+						.say(username, process_reply(msg.as_ref()).to_string())
+						.await
+					{
+						tracing::error!("Couldn't send chat msg: {e}");
+					}
+				}
+			},
+			e => todo!("{e:?}"),
+		}
+	}
+}
+
 static FIND_RANGE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\{\d+\.\.\d+\})+").unwrap());
-pub fn process_reply(s: &str) -> Cow<'_, str> {
+fn process_reply(s: &str) -> Cow<'_, str> {
 	let mut rng = rand::rng();
 
 	FIND_RANGE.replace_all(s, |caps: &regex::Captures| {

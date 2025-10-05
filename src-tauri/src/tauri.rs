@@ -153,7 +153,7 @@ async fn get_redeems() -> Result<Vec<FrontendRedeem>, ErrorMsg> {
 		Err(mut e) => {
 			e = e.overwrite_msg(ErrorMsg::RedeemRequest);
 			tracing::error!("Error getting twitch redeems: {e}");
-			return Err(ErrorMsg::RedeemRequest);
+			Err(ErrorMsg::RedeemRequest)
 		}
 		Ok(redeems) => Ok(redeems
 			.into_iter()

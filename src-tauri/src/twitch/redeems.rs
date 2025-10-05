@@ -5,7 +5,10 @@ use twitch_api::{
 
 use crate::{
 	error::{Error, ErrorMsg},
-	twitch::TwitchClient,
+	twitch::{
+		TwitchClient,
+		actions::{Trigger, get_action},
+	},
 };
 
 impl TwitchClient {
@@ -62,5 +65,13 @@ impl TwitchClient {
 		tracing::debug!("Setup Redeem Subscription: {sub:#?}");
 
 		Ok(())
+	}
+
+	pub async fn exec_redeem(id: &str) {
+		if let Some(action) = get_action(id).await
+			&& let Trigger::Redeem(_) = action.trigger
+		{
+			action.exec.exec().await;
+		}
 	}
 }
