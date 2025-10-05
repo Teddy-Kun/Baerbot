@@ -1,13 +1,8 @@
-use eyre::Result;
+#![feature(trim_prefix_suffix)]
 
-mod service;
-mod shared;
-mod ui;
-
-pub async fn start_service() -> Result<()> {
-	service::start_service().await
-}
-
-pub fn start_ui() {
-	ui::run();
-}
+#[deny(clippy::unwrap_used)]
+pub mod config;
+pub mod error;
+pub mod os_color;
+pub mod twitch;
+pub mod utils;

@@ -1,25 +1,20 @@
 <script lang="ts">
-	import Button from "@/lib/components/ui/button/button.svelte";
-	import { commands } from "@/bindings";
-	import { toast } from "svelte-sonner";
-	import { Input } from "@/lib/components/ui/input";
-	import store from "@/store.svelte";
+	import Hamster from "$lib/components/hamster.svelte";
+	import { commands } from "$lib/bindings";
+	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
+	import { onMount } from "svelte";
+	import store from "$lib/store.svelte";
 
-	let name = $state("");
-
-	async function greet(event: Event): Promise<void> {
-		event.preventDefault();
-		// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-		toast(await commands.greet(name));
-	}
+	onMount(() => {
+		commands.isLoggedIn().then((res) => {
+			console.debug("isLoggedIn", res);
+			if (res) store.register_login(res);
+			else goto(resolve("/login"));
+		});
+	});
 </script>
 
-<div class="flex flex-col gap-4">
-	<h1>Current Tab: {store.currentTab}</h1>
-	<Input
-		id="greet-input"
-		placeholder="Enter a name..."
-		bind:value={name}
-	/>
-	<Button type="submit" onclick={greet}>Greet</Button>
-</div>
+<main class="w-[100vw] h-[100vh] flex items-center justify-center">
+	<Hamster />
+</main>

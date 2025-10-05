@@ -1,18 +1,19 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tedbot-ui",
+  "productName": "tedbot",
   "version": "0.1.0",
-  "identifier": "com.tedbot-ui.app",
+  "identifier": "com.teddy.tedbot",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "bun run build",
-    "frontendDist": "../build"
+    "frontendDist": "../build",
+    "removeUnusedCommands": true
   },
   "app": {
     "windows": [
       {
-        "title": "tedbot-ui",
+        "title": "tedbot",
         "width": 800,
         "height": 600
       }
