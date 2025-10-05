@@ -54,10 +54,7 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 
 	client.join(username.clone())?;
 	client
-		.say(
-			username,
-			format!("{} initialized! 🧸", NAME_CAPITALIZED.as_str()),
-		)
+		.say(username, format!("{} initialized! 🧸", NAME_CAPITALIZED))
 		.await?;
 
 	Ok(join_handle)

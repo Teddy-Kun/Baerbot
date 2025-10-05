@@ -204,7 +204,7 @@ pub fn run() {
 			.expect("Failed to export typescript bindings");
 	}
 
-	tracing::info!("{} started", NAME_CAPITALIZED.as_str());
+	tracing::info!("{} started", NAME_CAPITALIZED);
 
 	tauri::Builder::default()
 		// .plugin(tauri_plugin_opener::init())

@@ -7,13 +7,7 @@ use std::{
 
 pub static NAME: &str = env!("CARGO_PKG_NAME");
 
-pub static NAME_CAPITALIZED: LazyLock<String> = LazyLock::new(|| {
-	let mut c = NAME.chars();
-	match c.next() {
-		Some(u) => u.to_uppercase().chain(c).collect(),
-		None => String::new(),
-	}
-});
+pub static NAME_CAPITALIZED: &str = "Bärbot";
 
 pub static CFG_DIR_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 	match dirs::config_dir() {
