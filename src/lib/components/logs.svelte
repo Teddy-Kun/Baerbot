@@ -45,7 +45,6 @@
 			const logBuf: Log[] = [];
 			let i = -1;
 			for (const log of res) {
-				console.log(log.charAt(0), log);
 				if (log.startsWith("\u001b[2m2")) {
 					i++;
 					logBuf.push({
