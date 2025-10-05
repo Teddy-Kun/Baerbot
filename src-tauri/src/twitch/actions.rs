@@ -108,6 +108,7 @@ pub enum Exec {
 	Counter(TwitchCounter),
 	Timeout(u32),
 	Ban,
+	Chance(f64, Box<Exec>, Box<Exec>),
 }
 
 impl Exec {
@@ -149,6 +150,20 @@ impl Exec {
 				tw_client
 					.ban_user(target_user.expect("User not given"), "", None)
 					.await
+			}
+			Exec::Chance(chance, opt1, opt2) => {
+				drop(tw_client); // freeing the lock is required here
+				let random_f: f64;
+				{
+					// scope here because rng does not implement send
+					let mut rng = rand::rng();
+					random_f = rng.random_range(0.0..1.0);
+				}
+				if random_f < *chance {
+					Box::pin(opt1.exec(target_user)).await
+				} else {
+					Box::pin(opt2.exec(target_user)).await
+				}
 			}
 			e => todo!("{e:?}"),
 		}
