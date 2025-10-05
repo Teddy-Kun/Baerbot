@@ -19,16 +19,16 @@
 </script>
 
 <div class="flex-1">
-	<Resizable.PaneGroup direction="horizontal">
-		<Resizable.Pane>
-			<div class="flex flex-col size-full p-4 gap-4">
-				{#if store.current_tab === "actions"}
-					<BotActions />
-				{:else if store.current_tab === "logs"}
-					<Logs />
-				{/if}
-			</div>
-		</Resizable.Pane>
+	<!-- <Resizable.PaneGroup direction="horizontal">
+		<Resizable.Pane> -->
+	<div class="flex flex-col size-full p-4 gap-4">
+		{#if store.current_tab === "actions"}
+			<BotActions />
+		{:else if store.current_tab === "logs"}
+			<Logs />
+		{/if}
+	</div>
+	<!-- </Resizable.Pane>
 		<Resizable.Handle />
 		<Resizable.Pane>
 			{#if store.username}
@@ -42,5 +42,5 @@
 				<Hamster />
 			{/if}
 		</Resizable.Pane>
-	</Resizable.PaneGroup>
+	</Resizable.PaneGroup> -->
 </div>
