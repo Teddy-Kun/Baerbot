@@ -5,7 +5,7 @@ use twitch_api::eventsub::{Event, EventsubWebsocketData, Message};
 
 use crate::{
 	error::Error,
-	twitch::{TWITCH_CLIENT, TwitchClient},
+	twitch::{TWITCH_CLIENT, TwitchClient, redeems::exec_redeem},
 };
 
 impl TwitchClient {
@@ -51,22 +51,25 @@ impl TwitchClient {
 							match payload.message {
 								Message::Notification(event) => {
 									tracing::info!(
-										"{} redeemed: {} ({})",
+										"{} redeemed: {} ({}); {}",
 										event.user_name,
 										event.reward.title,
-										event.reward.id
+										event.reward.id,
+										event.reward.prompt
+									);
+
+									// TODO: auto-remove event from rewards queue as successfull or reject them
+									_ = exec_redeem(
+										event.reward.id.as_str(),
+										event.reward.prompt.as_str(),
 									);
 								}
-								p => {
-									tracing::warn!("Unknown event msg:\n{p:#?}")
-								}
+								p => tracing::warn!("Unknown event msg:\n{p:#?}"),
 							}
 						}
 						_ => tracing::warn!("Unknown notification:\n{payload:#?}"),
 					},
-					_ => {
-						tracing::warn!("Unhandled websocket event:\n{:#?}", event)
-					}
+					_ => tracing::warn!("Unhandled websocket event:\n{:#?}", event),
 				}
 			}
 		});

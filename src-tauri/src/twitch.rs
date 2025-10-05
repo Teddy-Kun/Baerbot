@@ -16,6 +16,7 @@ pub mod chat;
 pub mod counter;
 pub mod events;
 pub mod redeems;
+pub mod users;
 
 type IrcClient = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 

@@ -106,33 +106,50 @@ pub enum Exec {
 	ChatMsg(ArcStr),
 	Reply(ArcStr),
 	Counter(TwitchCounter),
+	Timeout(u32),
+	Ban,
 }
 
 impl Exec {
-	pub async fn exec(&self) {
+	pub async fn exec(&self, target_user: Option<&str>) -> Option<()> {
 		let tw_client = TWITCH_CLIENT.read().await;
 		let username = match tw_client.get_username() {
 			None => {
 				tracing::error!("Username gone");
-				return;
+				return None;
 			}
 			Some(u) => u,
 		};
 		let client = tw_client.chat_client.clone();
-		drop(tw_client);
 
 		match self {
 			Exec::ChatMsg(msg) => match client {
-				None => tracing::error!("Chat client not set up"),
+				None => {
+					tracing::error!("Chat client not set up");
+					None
+				}
 				Some(client) => {
 					if let Err(e) = client
 						.say(username, process_reply(msg.as_ref()).to_string())
 						.await
 					{
 						tracing::error!("Couldn't send chat msg: {e}");
+						None
+					} else {
+						Some(())
 					}
 				}
 			},
+			Exec::Timeout(timeout) => {
+				tw_client
+					.ban_user(target_user.expect("User not given"), "", Some(*timeout))
+					.await
+			}
+			Exec::Ban => {
+				tw_client
+					.ban_user(target_user.expect("User not given"), "", None)
+					.await
+			}
 			e => todo!("{e:?}"),
 		}
 	}

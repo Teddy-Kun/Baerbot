@@ -135,7 +135,7 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 
 	tracing::debug!("action: {action:?}");
 
-	action.exec.exec().await;
+	action.exec.exec(None).await;
 
 	Ok(())
 }
