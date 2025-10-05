@@ -3,10 +3,7 @@
 	import { resolve } from "$app/paths";
 	import { commands } from "$lib/bindings";
 	import BotActions from "$lib/components/bot_actions.svelte";
-	import Chat from "$lib/components/chat.svelte";
-	import Hamster from "$lib/components/hamster.svelte";
 	import Logs from "$lib/components/logs.svelte";
-	import * as Resizable from "$lib/components/ui/resizable/index.js";
 	import store from "$lib/store.svelte";
 	import { onMount } from "svelte";
 
