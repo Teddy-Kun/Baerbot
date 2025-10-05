@@ -112,7 +112,7 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 	let (prefix, msg) = params[1].split_at(1);
 	let msg = msg.to_lowercase();
 
-	if msg.contains("cheap viewers") {
+	if (msg.contains('.') || msg.contains("dot")) && msg.contains("cheap viewers") {
 		_ = TWITCH_CLIENT
 			.read()
 			.await
