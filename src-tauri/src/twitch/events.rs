@@ -31,6 +31,12 @@ impl TwitchClient {
 					Ok(e) => e,
 				};
 
+				{
+					let mut tw_client = TWITCH_CLIENT.write().await;
+					tw_client.websocket_last_event = Some(std::time::SystemTime::now());
+					// auto-drop TWITCH_CLIENT lock
+				}
+
 				match event {
 					EventsubWebsocketData::Welcome {
 						metadata: _,
@@ -69,6 +75,13 @@ impl TwitchClient {
 						}
 						_ => tracing::warn!("Unknown notification:\n{payload:#?}"),
 					},
+					EventsubWebsocketData::Keepalive {
+						metadata: _,
+						payload: _,
+					} => {
+						// do nothing
+						// we track the heartbeat timer further up
+					}
 					_ => tracing::warn!("Unhandled websocket event:\n{:#?}", event),
 				}
 			}

@@ -1,4 +1,7 @@
-use std::sync::{Arc, LazyLock};
+use std::{
+	sync::{Arc, LazyLock},
+	time::SystemTime,
+};
 
 use tauri::async_runtime::{JoinHandle, RwLock};
 use twitch_api::{
@@ -23,6 +26,7 @@ type IrcClient = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 pub static TWITCH_CLIENT: LazyLock<Arc<RwLock<TwitchClient>>> =
 	LazyLock::new(|| Arc::new(RwLock::new(TwitchClient::new())));
 
+#[derive(Default)]
 pub struct TwitchClient {
 	client: HelixClient<'static, reqwest::Client>,
 	token: Option<Arc<UserToken>>,
@@ -30,13 +34,8 @@ pub struct TwitchClient {
 	chat_listener: Option<JoinHandle<()>>,
 	user_info: Option<User>,
 	websocket_id: Option<Box<str>>,
+	websocket_last_event: Option<SystemTime>, // TODO: check how long ago this is and potentially reconnect
 	redeems: Option<Vec<CustomReward>>,
-}
-
-impl Default for TwitchClient {
-	fn default() -> Self {
-		Self::new()
-	}
 }
 
 impl Drop for TwitchClient {
@@ -49,15 +48,7 @@ impl Drop for TwitchClient {
 
 impl TwitchClient {
 	pub fn new() -> Self {
-		Self {
-			client: HelixClient::default(),
-			token: None,
-			chat_client: None,
-			chat_listener: None,
-			user_info: None,
-			websocket_id: None,
-			redeems: None,
-		}
+		Self::default()
 	}
 
 	pub fn get_token(&self) -> Option<Arc<UserToken>> {
