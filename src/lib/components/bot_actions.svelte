@@ -55,6 +55,18 @@
 		});
 	}
 
+	function toggle_action(action: Action): void {
+		const trigger_string = get_trigger_inner(action.trigger, false);
+		commands.toggleDisableAction(trigger_string).then((disabled) => {
+			if (disabled === null) return;
+
+			let action = actions.find(
+				(a) => get_trigger_inner(a.trigger, false) === trigger_string,
+			);
+			if (action) action.disabled = disabled;
+		});
+	}
+
 	onMount(update_actions);
 </script>
 
@@ -64,7 +76,13 @@
 {:else}
 	<ActionAdd update={update_actions} />
 
-	Current Commands
+	<div>
+		<h3>Current Commands</h3>
+		<i class="text-muted-foreground text-sm">
+			You can click commands to disable them.
+		</i>
+	</div>
+
 	<Table.Root>
 		<Table.Header>
 			<Table.Row>
@@ -74,7 +92,15 @@
 			</Table.Row>
 		</Table.Header>
 		{#each actions as action (action.trigger)}
-			<Table.Row>
+			<Table.Row
+				class={[
+					"cursor-pointer",
+					{
+						"text-muted-foreground line-through": action.disabled,
+					},
+				]}
+				onclick={(): void => toggle_action(action)}
+			>
 				<Table.Cell>
 					<p>{get_trigger_type(action.trigger)}</p>
 					<p>{get_trigger_inner(action.trigger)}</p>

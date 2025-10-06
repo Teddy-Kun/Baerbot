@@ -169,7 +169,7 @@ async fn get_redeems() -> Result<Vec<FrontendRedeem>, ErrorMsg> {
 
 #[tauri::command]
 #[specta::specta]
-async fn toggle_disable_action(key: Box<str>) -> bool {
+async fn toggle_disable_action(key: Box<str>) -> Option<bool> {
 	toggle_action(key.as_ref())
 }
 

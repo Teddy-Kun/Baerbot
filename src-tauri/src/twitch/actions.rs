@@ -295,15 +295,16 @@ pub async fn get_all_actions() -> Vec<Action> {
 	v
 }
 
-pub fn toggle_disable_action(key: &str) -> bool {
-	let mut action = match ACTION_TABLE.get_mut(key) {
-		Some(a) => a,
-		None => return true,
+pub fn toggle_disable_action(key: &str) -> Option<bool> {
+	let mut action = ACTION_TABLE.get_mut(key)?;
+	let res = !action.value().disabled;
+	action.value_mut().disabled = res;
+
+	if let Err(e) = save_action(action.value()) {
+		tracing::warn!("Error saving action as disabled: {e}")
 	};
 
-	let res = action.value().disabled;
-	action.value_mut().disabled = res;
-	res
+	Some(res)
 }
 
 pub async fn save_actions() -> Result<(), Error> {

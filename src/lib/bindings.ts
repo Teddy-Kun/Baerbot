@@ -56,7 +56,7 @@ async getRedeems() : Promise<Result<FrontendRedeem[], ErrorMsg>> {
     else return { status: "error", error: e  as any };
 }
 },
-async toggleDisableAction(key: string) : Promise<boolean> {
+async toggleDisableAction(key: string) : Promise<boolean | null> {
     return await TAURI_INVOKE("toggle_disable_action", { key });
 }
 }
