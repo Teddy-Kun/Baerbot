@@ -10,7 +10,6 @@ export const KeyTranslations = Object.freeze({
 	Chance: "Random",
 	ChatMsg: "Chat-Message",
 	Counter: "Count something",
-	Reply: "Reply to Chat-Message",
 	Timeout: "Timeout User",
 } satisfies { [k in ExecKey]: string | null });
 
@@ -25,7 +24,6 @@ export const Descriptions = Object.freeze({
 	ChatMsg:
 		"Say a message in chat. You can use {a..b} to generate a random number, in the range of `a` up to and including `b`. For example {1..6} would be like rolling a 6-sided dice.",
 	Counter: null,
-	Reply: null,
 	Timeout:
 		"Other: A user specified by the one activating the action. User: The one activating the action",
 } satisfies { [k in ExecKey]: string | null });

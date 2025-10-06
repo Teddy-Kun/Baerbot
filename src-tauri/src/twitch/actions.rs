@@ -108,7 +108,6 @@ pub enum ExecTarget {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub enum Exec {
 	ChatMsg(ArcStr),
-	Reply(ArcStr),
 	Counter(TwitchCounter),
 	Timeout(ExecTarget, u32),
 	Ban(ExecTarget),
