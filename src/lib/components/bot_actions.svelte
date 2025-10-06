@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Button from "./ui/button/button.svelte";
 	import * as Table from "$lib/components/ui/table/index";
+	import BotIcon from "@lucide/svelte/icons/bot";
+	import BotOffIcon from "@lucide/svelte/icons/bot-off";
 	import TrashIcon from "@lucide/svelte/icons/trash";
 	import {
 		commands,
@@ -12,6 +14,8 @@
 	import Hamster from "./hamster.svelte";
 	import * as Sidebar from "./ui/sidebar/index";
 	import ActionAdd from "./action_add.svelte";
+	import type { ExecKey } from "./exec_detailed/exec_utils";
+	import * as Tooltip from "./ui/tooltip/index";
 
 	let loading: boolean = $state(true);
 
@@ -37,8 +41,11 @@
 	}
 
 	function get_exec_inner(trigger: Exec): string {
-		let key = Object.keys(trigger)[0] as keyof Exec;
-		return trigger[key];
+		let key = Object.keys(trigger)[0] as ExecKey;
+		// @ts-expect-error works guaranteed, typescript is just stupid
+		let res: unknown = trigger[key];
+		if (typeof res === "object") return "Display WIP";
+		return `${res}`;
 	}
 
 	function remove_action(action: Action): void {
@@ -92,30 +99,53 @@
 			</Table.Row>
 		</Table.Header>
 		{#each actions as action (action.trigger)}
-			<Table.Row
-				class={[
-					"cursor-pointer",
-					{
+			<Table.Row>
+				<Table.Cell
+					class={{
 						"text-muted-foreground line-through": action.disabled,
-					},
-				]}
-				onclick={(): void => toggle_action(action)}
-			>
-				<Table.Cell>
+					}}
+				>
 					<p>{get_trigger_type(action.trigger)}</p>
 					<p>{get_trigger_inner(action.trigger)}</p>
 				</Table.Cell>
-				<Table.Cell>
+				<Table.Cell
+					class={{
+						"text-muted-foreground line-through": action.disabled,
+					}}
+				>
 					<p>{get_exec_type(action.exec)}</p>
 					<p>{get_exec_inner(action.exec)}</p>
 				</Table.Cell>
 				<Table.Cell>
-					<Button
-						variant="destructive"
-						onclick={(): void => remove_action(action)}
-					>
-						<TrashIcon />
-					</Button>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							<Button
+								variant="secondary"
+								onclick={(): void => toggle_action(action)}
+							>
+								{#if action.disabled}
+									<BotIcon />
+								{:else}
+									<BotOffIcon />
+								{/if}
+							</Button>
+						</Tooltip.Trigger>
+						<Tooltip.Content>
+							{action.disabled ? "Enable" : "Disable"}
+						</Tooltip.Content>
+					</Tooltip.Root>
+
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							<Button
+								variant="destructive"
+								onclick={(): void => remove_action(action)}
+							>
+								<TrashIcon />
+							</Button>
+						</Tooltip.Trigger>
+						<Tooltip.Content>Delete</Tooltip.Content>
+					</Tooltip.Root>
 				</Table.Cell>
 			</Table.Row>
 		{/each}
