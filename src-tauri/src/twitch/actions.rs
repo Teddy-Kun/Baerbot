@@ -264,12 +264,10 @@ pub async fn get_action(key: &str) -> Option<Action> {
 }
 
 pub async fn add_action(action: Action) {
-	_ = ACTION_TABLE.insert(action.trigger.get_inner().clone(), action);
-
-	// we keep the writing lock to ensure no other writes interrupt us
-	if let Err(e) = save_actions().await {
+	if let Err(e) = save_action(&action) {
 		tracing::error!("Error saving actions: {e}")
-	};
+	}
+	_ = ACTION_TABLE.insert(action.trigger.get_inner().clone(), action);
 }
 
 pub async fn drop_action(key: &str) {
@@ -278,7 +276,6 @@ pub async fn drop_action(key: &str) {
 		None => tracing::warn!("Action {key} was not found, nothing removed"),
 	}
 
-	// we keep the writing lock to ensure no other writes interrupt us
 	if let Err(e) = delete_action_from_fs(key) {
 		tracing::error!("Error deleting action from fs: {e}")
 	};
