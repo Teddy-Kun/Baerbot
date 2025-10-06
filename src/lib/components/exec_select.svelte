@@ -10,6 +10,7 @@
 	import ExecTimeout from "./exec_detailed/exec_timeout.svelte";
 	import TextInput from "./exec_detailed/text_input.svelte";
 	import ExecWip from "./exec_detailed/exec_wip.svelte";
+	import ExecRandom from "./exec_detailed/exec_random.svelte";
 
 	let { update_exec }: { update_exec: (e: Exec, valid: boolean) => void } =
 		$props();
@@ -59,6 +60,13 @@
 		class="col-span-2"
 		update={(text, v): void => {
 			child_exec = { ChatMsg: text };
+			valid = v;
+		}}
+	/>
+{:else if exec_type === "Chance"}
+	<ExecRandom
+		update={(e, v): void => {
+			child_exec = e;
 			valid = v;
 		}}
 	/>
