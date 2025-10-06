@@ -35,7 +35,6 @@
 		</Tabs.Root>
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<Button onclick={commands.debug}>DEBUG</Button>
 		<Button onclick={logout}>Logout</Button>
 		<Button
 			class="w-full px-2"

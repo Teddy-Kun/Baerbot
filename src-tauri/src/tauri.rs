@@ -167,12 +167,6 @@ async fn get_redeems() -> Result<Vec<FrontendRedeem>, ErrorMsg> {
 	}
 }
 
-#[tauri::command]
-#[specta::specta]
-async fn debug() {
-	// TWITCH_CLIENT.read().await.get_redeems().await;
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -187,8 +181,7 @@ pub fn run() {
 		get_rand_chatter,
 		open_log_dir,
 		get_current_logs,
-		get_redeems,
-		debug
+		get_redeems
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
