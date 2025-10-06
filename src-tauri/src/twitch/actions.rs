@@ -202,6 +202,7 @@ fn process_reply(s: &str) -> Cow<'_, str> {
 pub struct Action {
 	pub trigger: Trigger,
 	pub exec: Exec,
+	pub disabled: bool,
 	#[serde(skip)]
 	pub last_used: Arc<AtomicU64>,
 }

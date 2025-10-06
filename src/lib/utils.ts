@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { commands, type ErrorMsg } from "./bindings";
+import { commands, type ErrorMsg, type FrontendRedeem } from "./bindings";
 import { toast } from "svelte-sonner";
 import { toggleMode } from "mode-watcher";
 
@@ -18,6 +18,8 @@ export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
 	ref?: U | null;
 };
+
+export type RedeemMap = { [key: string]: FrontendRedeem };
 
 export function set_accent(color: string): void {
 	const root = document.getElementsByTagName("html")[0];

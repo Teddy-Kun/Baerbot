@@ -1,44 +1,21 @@
 <script lang="ts">
 	import Button from "./ui/button/button.svelte";
-	import Input from "./ui/input/input.svelte";
 	import * as Table from "$lib/components/ui/table/index";
 	import TrashIcon from "@lucide/svelte/icons/trash";
 	import {
 		commands,
 		type Action,
 		type Exec,
-		type FrontendRedeem,
 		type Trigger,
 	} from "$lib/bindings";
 	import { onMount } from "svelte";
 	import Hamster from "./hamster.svelte";
 	import * as Sidebar from "./ui/sidebar/index";
-	import * as Select from "./ui/select/index";
-	import { toast } from "svelte-sonner";
+	import ActionAdd from "./action_add.svelte";
 
 	let loading: boolean = $state(true);
 
 	let actions: Action[] = $state([]);
-
-	let trigger: "Command" | "Redeem" = $state("Command");
-	let identifier: string = $state("");
-	let response: string = $state("");
-
-	let num_redeems: number = $state(0);
-	let redeems: { [key: string]: FrontendRedeem } = {};
-
-	function add_action(): void {
-		// @ts-expect-error the following two lines in combination are safe, typescript just can't check it
-		let trig: Trigger = {};
-		// @ts-expect-error the following two lines in combination are safe, typescript just can't check it
-		trig[trigger] = identifier.toLowerCase();
-
-		let action: Action = {
-			trigger: trig,
-			exec: { ChatMsg: response },
-		};
-		commands.addAction(action).then(update_actions);
-	}
 
 	function get_trigger_type(trigger: Trigger): string {
 		return Object.keys(trigger)[0];
@@ -78,21 +55,6 @@
 		});
 	}
 
-	function get_redeems(): void {
-		commands.getRedeems().then((res) => {
-			console.debug("redeems", res);
-			if (res.status === "ok") {
-				num_redeems = res.data.length;
-				for (const redeem of res.data) redeems[redeem.id] = redeem;
-			} else toast.error("Couldn't fetch redeems");
-		});
-	}
-
-	function trigger_type_selected(value: string): void {
-		identifier = "";
-		if (value === "Redeem") get_redeems();
-	}
-
 	onMount(update_actions);
 </script>
 
@@ -100,44 +62,7 @@
 {#if loading}
 	<Hamster />
 {:else}
-	<div class="flex gap-2">
-		<Select.Root
-			type="single"
-			bind:value={trigger}
-			onValueChange={trigger_type_selected}
-		>
-			<Select.Trigger class="min-w-40">
-				{trigger === "Command" ? "Chat-Command" : trigger}
-			</Select.Trigger>
-			<Select.Content>
-				<Select.Item value="Command">Chat-Command</Select.Item>
-				<Select.Item value="Redeem">Redeem</Select.Item>
-			</Select.Content>
-		</Select.Root>
-		{#if trigger === "Command"}
-			<Input bind:value={identifier} placeholder="Command" />
-		{:else}
-			<Select.Root
-				type="single"
-				bind:value={identifier}
-				disabled={num_redeems === 0}
-			>
-				<Select.Trigger>
-					{redeems[identifier]?.name ?? "-"}
-				</Select.Trigger>
-				<Select.Content>
-					{#each Object.keys(redeems) as redeem_id (redeem_id)}
-						{@const redeem = redeems[redeem_id]}
-						<Select.Item value={redeem.id}>
-							{redeem.cost}: {redeem.name}
-						</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
-		{/if}
-	</div>
-	<Input bind:value={response} placeholder="Response" />
-	<Button onclick={add_action}>Add Action</Button>
+	<ActionAdd update={update_actions} />
 
 	Current Commands
 	<Table.Root>

@@ -55,9 +55,6 @@ async getRedeems() : Promise<Result<FrontendRedeem[], ErrorMsg>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
-},
-async debug() : Promise<void> {
-    await TAURI_INVOKE("debug");
 }
 }
 
@@ -71,7 +68,7 @@ async debug() : Promise<void> {
 
 /** user-defined types **/
 
-export type Action = { trigger: Trigger; exec: Exec }
+export type Action = { trigger: Trigger; exec: Exec; disabled: boolean }
 export type ColorSchemeAccent = { hue: number; saturation: number; luminance: number; hex_code: string }
 export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn" | "WebSocketSetup" | "RedeemRequest"
 export type Exec = { ChatMsg: string } | { Reply: string } | { Counter: InnerCounter } | { Timeout: [ExecTarget, number] } | { Ban: ExecTarget } | { Chance: [number, Exec, Exec] }
