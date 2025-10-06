@@ -70,6 +70,7 @@ impl TwitchClient {
 
 pub async fn exec_redeem(chatter_name: &str, id: &str, prompt: &str) {
 	if let Some(action) = get_action(id).await
+		&& action.allow_use()
 		&& let Trigger::Redeem(_) = action.trigger
 	{
 		let prompt = match prompt.len() {
