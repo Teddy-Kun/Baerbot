@@ -3,7 +3,7 @@ use baerbot_lib::{
 	os_color::{ColorSchemeAccent, get_color_scheme},
 	twitch::{
 		self, TWITCH_CLIENT,
-		actions::Action,
+		actions::{Action, toggle_disable_action as toggle_action},
 		auth::{forget_token, load_token},
 		chat::get_random_chatter,
 	},
@@ -167,6 +167,12 @@ async fn get_redeems() -> Result<Vec<FrontendRedeem>, ErrorMsg> {
 	}
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn toggle_disable_action(key: Box<str>) -> bool {
+	toggle_action(key.as_ref())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -181,7 +187,8 @@ pub fn run() {
 		get_rand_chatter,
 		open_log_dir,
 		get_current_logs,
-		get_redeems
+		get_redeems,
+		toggle_disable_action
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

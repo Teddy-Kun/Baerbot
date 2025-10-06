@@ -209,6 +209,10 @@ pub struct Action {
 
 impl Action {
 	pub fn allow_use(&self) -> bool {
+		if self.disabled {
+			return false;
+		};
+
 		let now = SystemTime::now();
 		let since = now
 			.duration_since(UNIX_EPOCH)
@@ -289,6 +293,17 @@ pub async fn get_all_actions() -> Vec<Action> {
 		.collect();
 	v.sort_unstable();
 	v
+}
+
+pub fn toggle_disable_action(key: &str) -> bool {
+	let mut action = match ACTION_TABLE.get_mut(key) {
+		Some(a) => a,
+		None => return true,
+	};
+
+	let res = action.value().disabled;
+	action.value_mut().disabled = res;
+	res
 }
 
 pub async fn save_actions() -> Result<(), Error> {
