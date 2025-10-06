@@ -12,7 +12,7 @@ use crate::{
 	utils::{NAME_CAPITALIZED, get_unix},
 };
 
-static ACTIVE_CHATTERS: LazyLock<Mutex<IndexMap<String, u64>>> =
+static ACTIVE_CHATTERS: LazyLock<Mutex<IndexMap<Box<str>, u64>>> =
 	LazyLock::new(|| Mutex::new(IndexMap::new()));
 
 pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandle<()>, Error> {
@@ -60,7 +60,7 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 	Ok(join_handle)
 }
 
-fn register_active_chatter(name: String) {
+fn register_active_chatter(name: Box<str>) {
 	let unix = get_unix();
 	spawn(async move {
 		let mut active_chatters = ACTIVE_CHATTERS.lock().await;
@@ -77,7 +77,7 @@ pub async fn is_chatter_active(name: &str) -> bool {
 	active_chatters.contains_key(name)
 }
 
-pub async fn get_random_chatter() -> Option<String> {
+pub async fn get_random_chatter() -> Option<Box<str>> {
 	let unix = get_unix();
 	let mut active_chatters = ACTIVE_CHATTERS.lock().await;
 	active_chatters.retain(|_, time| (*time - unix) > 5 * 60);
@@ -100,7 +100,8 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 		return Ok(());
 	}
 
-	register_active_chatter(params[0].clone());
+	let chatter_name = params[0].as_str();
+	register_active_chatter(Box::from(chatter_name));
 
 	if params.len() != 2 {
 		return Ok(());
@@ -113,7 +114,7 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 		_ = TWITCH_CLIENT
 			.read()
 			.await
-			.ban_user(params[0].as_str(), "bot detected", None)
+			.ban_user(chatter_name, "bot detected", None)
 			.await;
 		return Ok(());
 	}
@@ -142,7 +143,7 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 
 	tracing::debug!("action: {action:?}");
 
-	action.exec.exec(None).await;
+	action.exec.exec(chatter_name, None).await;
 
 	Ok(())
 }

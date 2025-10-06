@@ -102,17 +102,24 @@ impl Deref for Trigger {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub enum ExecTarget {
+	None,
+	User,
+	Other,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub enum Exec {
 	ChatMsg(ArcStr),
 	Reply(ArcStr),
 	Counter(TwitchCounter),
-	Timeout(u32),
-	Ban,
+	Timeout(ExecTarget, u32),
+	Ban(ExecTarget),
 	Chance(f64, Box<Exec>, Box<Exec>),
 }
 
 impl Exec {
-	pub async fn exec(&self, target_user: Option<&str>) -> Option<()> {
+	pub async fn exec(&self, user: &str, prompt: Option<&str>) -> Option<()> {
 		let tw_client = TWITCH_CLIENT.read().await;
 		let username = match tw_client.get_username() {
 			None => {
@@ -141,15 +148,23 @@ impl Exec {
 					}
 				}
 			},
-			Exec::Timeout(timeout) => {
-				tw_client
-					.ban_user(target_user.expect("User not given"), "", Some(*timeout))
-					.await
+			Exec::Timeout(target, timeout) => {
+				let target_user = match target {
+					ExecTarget::None => return None,
+					ExecTarget::User => user,
+					ExecTarget::Other => prompt?,
+				};
+
+				tw_client.ban_user(target_user, "", Some(*timeout)).await
 			}
-			Exec::Ban => {
-				tw_client
-					.ban_user(target_user.expect("User not given"), "", None)
-					.await
+			Exec::Ban(target) => {
+				let target_user = match target {
+					ExecTarget::None => return None,
+					ExecTarget::User => user,
+					ExecTarget::Other => prompt?,
+				};
+
+				tw_client.ban_user(target_user, "", None).await
 			}
 			Exec::Chance(chance, opt1, opt2) => {
 				drop(tw_client); // freeing the lock is required here
@@ -160,9 +175,9 @@ impl Exec {
 					random_f = rng.random_range(0.0..1.0);
 				}
 				if random_f < *chance {
-					Box::pin(opt1.exec(target_user)).await
+					Box::pin(opt1.exec(user, prompt)).await
 				} else {
-					Box::pin(opt2.exec(target_user)).await
+					Box::pin(opt2.exec(user, prompt)).await
 				}
 			}
 			e => todo!("{e:?}"),

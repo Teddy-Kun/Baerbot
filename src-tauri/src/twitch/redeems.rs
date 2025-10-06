@@ -68,14 +68,14 @@ impl TwitchClient {
 	}
 }
 
-pub async fn exec_redeem(id: &str, prompt: &str) {
+pub async fn exec_redeem(chatter_name: &str, id: &str, prompt: &str) {
 	if let Some(action) = get_action(id).await
 		&& let Trigger::Redeem(_) = action.trigger
 	{
-		let target_user = match prompt.len() {
+		let prompt = match prompt.len() {
 			0 => None,
 			_ => Some(prompt),
 		};
-		action.exec.exec(target_user).await;
+		action.exec.exec(chatter_name, prompt).await;
 	}
 }

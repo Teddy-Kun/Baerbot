@@ -99,7 +99,7 @@ async fn remove_action(trigger: Box<str>) {
 
 #[tauri::command]
 #[specta::specta]
-async fn get_rand_chatter() -> Option<String> {
+async fn get_rand_chatter() -> Option<Box<str>> {
 	get_random_chatter().await
 }
 

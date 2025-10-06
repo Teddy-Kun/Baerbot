@@ -66,6 +66,7 @@ impl TwitchClient {
 
 									// TODO: auto-remove event from rewards queue as successfull or reject them
 									_ = exec_redeem(
+										event.user_name.as_str(),
 										event.reward.id.as_str(),
 										event.reward.prompt.as_str(),
 									);
