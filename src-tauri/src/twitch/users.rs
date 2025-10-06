@@ -1,9 +1,6 @@
-use std::{
-	collections::HashMap,
-	sync::{Arc, LazyLock},
-};
+use std::sync::{Arc, LazyLock};
 
-use tokio::sync::Mutex;
+use dashmap::DashMap;
 use twitch_oauth2::TwitchToken;
 
 use crate::twitch::TwitchClient;
@@ -14,13 +11,11 @@ pub enum BanResult {
 	Banned,
 }
 
-static USER_CACHE: LazyLock<Mutex<HashMap<Arc<str>, Arc<str>>>> =
-	LazyLock::new(|| Mutex::new(HashMap::new()));
+static USER_CACHE: LazyLock<DashMap<Arc<str>, Arc<str>>> = LazyLock::new(DashMap::new);
 
 impl TwitchClient {
 	async fn get_twitch_user_id(&self, username: &str) -> Option<Arc<str>> {
-		let mut cache = USER_CACHE.lock().await;
-		match cache.get(username) {
+		match USER_CACHE.get(username) {
 			Some(user_id) => Some(user_id.clone()),
 			None => {
 				let token = self.token.clone()?;
@@ -30,7 +25,7 @@ impl TwitchClient {
 					.await;
 				if let Ok(Some(usr)) = usr {
 					let id: Arc<str> = Arc::from(usr.id.as_str());
-					cache.insert(Arc::from(usr.login.as_str()), id.clone());
+					USER_CACHE.insert(Arc::from(usr.login.as_str()), id.clone());
 					Some(id)
 				} else {
 					None

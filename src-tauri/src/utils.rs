@@ -19,6 +19,8 @@ pub static CFG_DIR_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 	}
 });
 
+pub static ACTION_DIR: LazyLock<PathBuf> = LazyLock::new(|| CFG_DIR_PATH.join("actions"));
+
 pub fn get_unix() -> u64 {
 	let now = SystemTime::now();
 	now.duration_since(UNIX_EPOCH)

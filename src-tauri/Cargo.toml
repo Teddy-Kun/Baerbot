@@ -65,6 +65,7 @@ indexmap = "2.11.4"
 tracing-appender = "0.2.3"
 regex = "1.11.3"
 tokio-tungstenite = { version = "0.28.0", features = ["native-tls", "tokio-native-tls"] }
+dashmap = "6.1.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ashpd = { version = "0.12.0", features = ["tokio"], default-features = false }

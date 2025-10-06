@@ -1,6 +1,5 @@
 use std::{
 	borrow::{Borrow, Cow},
-	collections::HashMap,
 	fs::{self, OpenOptions, create_dir_all, read_dir, remove_file},
 	io::Write,
 	ops::Deref,
@@ -11,22 +10,20 @@ use std::{
 	time::{SystemTime, UNIX_EPOCH},
 };
 
+use dashmap::DashMap;
 use rand::Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use tauri::async_runtime::RwLock;
 
 use crate::{
 	error::Error,
 	twitch::{TWITCH_CLIENT, counter::TwitchCounter},
-	utils::CFG_DIR_PATH,
+	utils::ACTION_DIR,
 };
 
-static ACTION_TABLE: LazyLock<RwLock<HashMap<ArcStr, Action>>> = LazyLock::new(|| {
-	let m = init_map().unwrap_or_default();
-	RwLock::new(m)
-});
+static ACTION_TABLE: LazyLock<DashMap<ArcStr, Action>> =
+	LazyLock::new(|| init_map().unwrap_or_default());
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq, PartialOrd, Ord)]
 // wrapper around Arc<str> so that we can implement Type by hand, until builtin support is in specta
@@ -262,85 +259,46 @@ impl Ord for Action {
 }
 
 pub async fn get_action(key: &str) -> Option<Action> {
-	let table = ACTION_TABLE.read().await;
-	table.get(key).cloned()
+	let a = ACTION_TABLE.get(key)?;
+	Some(a.value().clone())
 }
 
 pub async fn add_action(action: Action) {
-	let mut table = ACTION_TABLE.write().await;
-	table.insert(action.trigger.get_inner().clone(), action);
+	_ = ACTION_TABLE.insert(action.trigger.get_inner().clone(), action);
+
 	// we keep the writing lock to ensure no other writes interrupt us
-	if let Err(e) = save_actions_inner(&table).await {
+	if let Err(e) = save_actions().await {
 		tracing::error!("Error saving actions: {e}")
 	};
 }
 
 pub async fn drop_action(key: &str) {
-	let mut table = ACTION_TABLE.write().await;
-	match table.remove(key) {
+	match ACTION_TABLE.remove(key) {
 		Some(_) => tracing::debug!("removed action {key}"),
 		None => tracing::warn!("Action {key} was not found, nothing removed"),
 	}
+
 	// we keep the writing lock to ensure no other writes interrupt us
 	if let Err(e) = delete_action_from_fs(key) {
 		tracing::error!("Error deleting action from fs: {e}")
 	};
 }
 
-pub async fn save_actions() -> Result<(), Error> {
-	let table = ACTION_TABLE.read().await;
-	save_actions_inner(&table).await
-}
-
 pub async fn get_all_actions() -> Vec<Action> {
-	let table = ACTION_TABLE.read().await;
-	let mut v: Vec<Action> = table.values().cloned().collect();
+	let mut v: Vec<Action> = ACTION_TABLE
+		.iter()
+		.map(|inner| inner.value().clone())
+		.collect();
 	v.sort_unstable();
 	v
 }
 
-async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error> {
-	let p = CFG_DIR_PATH.join("actions");
+pub async fn save_actions() -> Result<(), Error> {
+	create_dir_all(ACTION_DIR.as_path())?;
 
-	tracing::debug!("actions dir {p:?}");
-
-	create_dir_all(&p)?;
-
-	let errs = table.values().filter_map(|action| {
-		let mut p = p.clone();
-
-		p.push(format!("{}.toml", action.trigger.deref()));
-
-		tracing::info!("action path {p:?}");
-
-		let s = match toml::to_string_pretty(&action) {
-			Ok(s) => s,
-			Err(e) => {
-				let e: Error = e.into();
-				return Some(e);
-			}
-		};
-
-		let mut f = match OpenOptions::new()
-			.create(true)
-			.write(true)
-			.truncate(true)
-			.open(p)
-		{
-			Ok(f) => f,
-			Err(e) => {
-				let e: Error = e.into();
-				return Some(e);
-			}
-		};
-
-		match f.write_all(s.as_bytes()) {
-			Ok(_) => None,
-			Err(e) => {
-				let e: Error = e.into();
-				Some(e)
-			}
-		}
+	let errs = ACTION_TABLE.iter().filter_map(|inner| {
+		let action = inner.value();
+		save_action(action).err()
 	});
 
 	errs.for_each(|e| {
@@ -350,13 +308,28 @@ async fn save_actions_inner(table: &HashMap<ArcStr, Action>) -> Result<(), Error
 	Ok(())
 }
 
-fn delete_action_from_fs(key: &str) -> Result<(), Error> {
-	let path = CFG_DIR_PATH.join("actions");
+fn save_action(action: &Action) -> Result<(), Error> {
+	let p = ACTION_DIR.join(format!("{}.toml", action.trigger.deref()));
 
+	tracing::info!("action path {p:?}");
+
+	let s = toml::to_string_pretty(action)?;
+
+	let mut f = OpenOptions::new()
+		.create(true)
+		.write(true)
+		.truncate(true)
+		.open(p)?;
+
+	f.write_all(s.as_bytes())?;
+	Ok(())
+}
+
+fn delete_action_from_fs(key: &str) -> Result<(), Error> {
 	let target_name = format!("{key}.toml");
 	tracing::debug!("Trying to delete {target_name}");
 
-	let count = read_dir(&path)?
+	let count = read_dir(ACTION_DIR.as_path())?
 		.filter_map(Result::ok)
 		.map(|entry| entry.path())
 		.filter(|path| {
@@ -376,18 +349,19 @@ fn delete_action_from_fs(key: &str) -> Result<(), Error> {
 		.count();
 
 	if count == 0 {
-		tracing::warn!("File `{target_name}` not found in {:?}", path);
+		tracing::warn!(
+			"File `{target_name}` not found in {:?}",
+			ACTION_DIR.as_path()
+		);
 	}
 
 	Ok(())
 }
 
-fn init_map() -> Result<HashMap<ArcStr, Action>, Error> {
-	let mut m = HashMap::new();
+fn init_map() -> Result<DashMap<ArcStr, Action>, Error> {
+	let m = DashMap::new();
 
-	let path = CFG_DIR_PATH.join("actions");
-
-	read_dir(&path)?
+	read_dir(ACTION_DIR.as_path())?
 		.filter_map(Result::ok)
 		.map(|entry| entry.path())
 		.filter(|path| {
