@@ -56,7 +56,6 @@
 
 	function update_actions(): void {
 		commands.getAllActions().then((res) => {
-			console.debug("actions", res);
 			actions = res;
 			loading = false;
 		});

@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use std::sync::{Arc, nonpoison::RwLock};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use tauri::async_runtime::RwLock;
+use tokio::task::spawn_blocking;
 
 #[derive(Debug, Deserialize, Serialize, Type)]
 struct InnerCounter {
@@ -16,16 +16,26 @@ pub struct TwitchCounter {
 }
 
 impl TwitchCounter {
-	pub async fn add(&mut self) -> String {
-		let mut inner = self.inner.write().await;
-		inner.counter += 1;
-		format_counter(&inner)
+	pub async fn add(&mut self, to_add: u32) -> String {
+		let inner = self.inner.clone();
+		spawn_blocking(move || {
+			let mut inner = inner.write();
+			inner.counter += to_add;
+			format_counter(&inner)
+		})
+		.await
+		.unwrap()
 	}
 
 	pub async fn reset(&mut self) -> String {
-		let mut inner = self.inner.write().await;
-		inner.counter = 0;
-		format_counter(&inner)
+		let inner = self.inner.clone();
+		spawn_blocking(move || {
+			let mut inner = inner.write();
+			inner.counter = 0;
+			format_counter(&inner)
+		})
+		.await
+		.unwrap()
 	}
 }
 
@@ -41,7 +51,7 @@ impl Serialize for TwitchCounter {
 	where
 		S: serde::Serializer,
 	{
-		let inner = self.inner.blocking_read();
+		let inner = self.inner.read();
 		inner.serialize(serializer)
 	}
 }

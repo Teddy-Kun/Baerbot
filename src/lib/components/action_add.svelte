@@ -49,12 +49,10 @@
 	}
 
 	function set_trigger(trig: Trigger): void {
-		console.log("new trigger", trig);
 		trigger = trig;
 	}
 
 	function set_exec(e: Exec, v: boolean): void {
-		console.log("new exec", e);
 		valid = v;
 		exec = e;
 	}

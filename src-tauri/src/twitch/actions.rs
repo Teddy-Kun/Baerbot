@@ -115,7 +115,7 @@ pub enum Exec {
 }
 
 impl Exec {
-	pub async fn exec(&self, user: &str, prompt: Option<&str>) -> Option<()> {
+	pub async fn exec(&mut self, user: &str, prompt: Option<&str>) -> Option<()> {
 		let tw_client = TWITCH_CLIENT.read().await;
 		let username = match tw_client.get_username() {
 			None => {
@@ -176,7 +176,41 @@ impl Exec {
 					Box::pin(opt2.exec(user, prompt)).await
 				}
 			}
-			e => todo!("{e:?}"),
+			Exec::Counter(counter) => {
+				let resp: String = match prompt {
+					Some("reset") => counter.reset().await,
+					Some(text) => {
+						let mut splitter = text.split(' ');
+						let cmd = splitter.next();
+						let num = splitter.next();
+
+						if let Some(cmd) = cmd
+							&& let Some(num) = num
+							&& cmd == "add" && let Ok(num) = num.parse()
+						{
+							counter.add(num).await
+						} else {
+							counter.add(1).await
+						}
+					}
+					_ => counter.add(1).await,
+				};
+
+				match client {
+					None => {
+						tracing::error!("Chat client not set up");
+						None
+					}
+					Some(client) => {
+						if let Err(e) = client.say(username, resp).await {
+							tracing::error!("Couldn't send chat msg: {e}");
+							None
+						} else {
+							Some(())
+						}
+					}
+				}
+			}
 		}
 	}
 }

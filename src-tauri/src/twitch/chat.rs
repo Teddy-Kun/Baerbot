@@ -132,7 +132,7 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 		Some(m) => m,
 	};
 
-	let action = match get_action(msg.to_lowercase().as_str()).await {
+	let mut action = match get_action(msg.to_lowercase().as_str()).await {
 		Some(a) => a,
 		None => return Ok(()),
 	};
