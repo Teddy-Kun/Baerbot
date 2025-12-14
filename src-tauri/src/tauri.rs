@@ -12,6 +12,7 @@ use baerbot_lib::{
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::{Builder, collect_commands};
+use twitch_oauth2::UserToken;
 
 use crate::logs;
 
@@ -24,20 +25,21 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 #[specta::specta]
 async fn login() -> Result<String, ErrorMsg> {
-	let reader = TWITCH_CLIENT.read().await;
+	let tkn: UserToken;
+	{
+		let reader = TWITCH_CLIENT.read().await;
 
-	if reader.get_username().is_some() {
-		return Err(ErrorMsg::AlreadyLoggedIn);
+		if reader.get_username().is_some() {
+			return Err(ErrorMsg::AlreadyLoggedIn);
+		}
+
+		tkn = reader.login().await?;
+		// drop read lock, because we need to write
 	}
-
-	let tkn = reader.login().await?;
-
-	drop(reader); // drop read lock, because we need to write
 
 	let name = tkn.login.to_string();
 
-	let mut client_writer = TWITCH_CLIENT.write().await;
-	client_writer.set_token(tkn).await;
+	TWITCH_CLIENT.write().await.set_token(tkn).await;
 
 	Ok(name)
 }
