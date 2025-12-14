@@ -25,6 +25,13 @@ pub struct Args {
 	)]
 	pub token_file: Option<Arc<str>>,
 
+	#[arg(
+		long,
+		env,
+		help = "Token won't be loaded or saved and login will be forgotten upon closing the application"
+	)]
+	pub temp_token: bool,
+
 	#[arg(short, long, env, help = "Enable debug mode")]
 	pub debug: bool,
 }
@@ -50,7 +57,12 @@ impl Config {
 			Ok(s) => s,
 			Err(e) => {
 				tracing::warn!("Couldn't open config: {e}");
-				Self::default()
+				let s = Self::default();
+				if let Err(e) = s.save() {
+					tracing::warn!("Couldn't save default config: {e}");
+				}
+
+				s
 			}
 		}
 	}

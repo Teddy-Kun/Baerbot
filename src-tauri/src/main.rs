@@ -19,15 +19,12 @@ fn setup_config() {
 	if !def_config.equal_scope(&disk_config) {
 		tracing::debug!("Changed scopes detected. Forgetting old token");
 		_ = twitch::auth::forget_token();
-	}
 
-	if let Err(e) = def_config.save() {
-		tracing::warn!("Couldn't save current disk version: {e}");
-		match Config::read() {
-			Err(e) => tracing::warn!("Couldn't update Config: {e}"),
-			Ok(c) => *disk_config = c,
+		disk_config.scopes = def_config.scopes;
+		if let Err(e) = disk_config.save() {
+			tracing::warn!("Couldn't save current disk version: {e}");
 		}
-	};
+	}
 }
 
 fn main() {
