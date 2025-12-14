@@ -19,6 +19,7 @@ pub enum ErrorMsg {
 	TokenGone,
 	ChatMsgSend,
 	AlreadyLoggedIn,
+	FeatureDisabled,
 	WebSocketSetup,
 	RedeemRequest,
 }
@@ -48,6 +49,7 @@ impl Error {
 		}
 	}
 
+	/// Only sets the message if the error is unknown
 	pub fn try_set_msg(mut self, msg: ErrorMsg) -> Self {
 		if msg == ErrorMsg::Unknown {
 			self.msg = msg;
@@ -56,6 +58,7 @@ impl Error {
 		self
 	}
 
+	/// Overwrites the message, no matter what
 	pub fn overwrite_msg(mut self, msg: ErrorMsg) -> Self {
 		self.msg = msg;
 		self
