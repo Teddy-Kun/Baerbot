@@ -13,9 +13,7 @@ use baerbot_lib::{
 mod logs;
 mod tauri;
 
-fn main() {
-	logs::setup_logging();
-
+fn setup_config() {
 	let def_config = Config::default();
 	let mut disk_config = CONFIG.write();
 	if !def_config.equal_scope(&disk_config) {
@@ -30,6 +28,11 @@ fn main() {
 			Ok(c) => *disk_config = c,
 		}
 	};
+}
+
+fn main() {
+	logs::setup_logging();
+	setup_config();
 
 	tauri::run()
 }
