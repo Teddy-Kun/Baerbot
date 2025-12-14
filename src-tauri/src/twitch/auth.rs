@@ -59,6 +59,11 @@ async fn save_token(token: &UserToken) -> Result<(), Error> {
 
 async fn internal_save_token(token: &UserToken) -> Result<(), Error> {
 	let conf = &ARGS;
+
+	if conf.temp_token {
+		return Err(Error::new(ErrorMsg::FeatureDisabled));
+	}
+
 	if let Some(file) = conf.token_file.clone() {
 		let mut f = File::create(file.as_ref())?;
 		f.write_all(token.access_token.as_str().as_bytes())?;
@@ -87,6 +92,11 @@ pub async fn load_token(client: &TwitchClient) -> Result<UserToken, Error> {
 
 async fn internal_load_token(client: &TwitchClient) -> Result<UserToken, Error> {
 	let conf = &ARGS;
+
+	if conf.temp_token {
+		return Err(Error::new(ErrorMsg::FeatureDisabled));
+	}
+
 	if let Some(file) = conf.token_file.clone() {
 		let token_str = fs::read_to_string(file.as_ref())?;
 
