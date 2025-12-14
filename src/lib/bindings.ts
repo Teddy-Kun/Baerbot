@@ -58,6 +58,9 @@ async getRedeems() : Promise<Result<FrontendRedeem[], ErrorMsg>> {
 },
 async toggleDisableAction(key: string) : Promise<boolean | null> {
     return await TAURI_INVOKE("toggle_disable_action", { key });
+},
+async redeemsEnabled() : Promise<boolean> {
+    return await TAURI_INVOKE("redeems_enabled");
 }
 }
 

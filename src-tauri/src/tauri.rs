@@ -1,4 +1,5 @@
 use baerbot_lib::{
+	config::CONFIG,
 	error::ErrorMsg,
 	os_color::{ColorSchemeAccent, get_color_scheme},
 	twitch::{
@@ -77,6 +78,12 @@ async fn logout() {
 #[specta::specta]
 async fn get_accent_color() -> Option<ColorSchemeAccent> {
 	get_color_scheme().await
+}
+
+#[tauri::command]
+#[specta::specta]
+fn redeems_enabled() -> bool {
+	CONFIG.read().enable_redeems
 }
 
 #[tauri::command]
@@ -190,7 +197,8 @@ pub fn run() {
 		open_log_dir,
 		get_current_logs,
 		get_redeems,
-		toggle_disable_action
+		toggle_disable_action,
+		redeems_enabled
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
