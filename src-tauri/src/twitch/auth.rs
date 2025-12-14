@@ -7,7 +7,7 @@ use tokio::time::sleep;
 use twitch_oauth2::{AccessToken, ClientId, DeviceUserTokenBuilder, UserToken};
 
 use crate::{
-	config::{ARGS, DEFAULT_CACHE},
+	config::{ARGS, Config},
 	error::{Error, ErrorMsg},
 	twitch::TwitchClient,
 };
@@ -33,7 +33,7 @@ pub async fn twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
 async fn internal_twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
 	let client_id = ClientId::new(env!("API_KEY").to_string());
 
-	let mut builder = DeviceUserTokenBuilder::new(client_id, DEFAULT_CACHE.scopes.clone());
+	let mut builder = DeviceUserTokenBuilder::new(client_id, Config::default().scopes);
 	let code = builder.start(&client.client).await?;
 
 	tracing::debug!("code: {:#?}", code);

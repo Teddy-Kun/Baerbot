@@ -4,6 +4,7 @@ use twitch_api::{
 };
 
 use crate::{
+	config::CONFIG,
 	error::{Error, ErrorMsg},
 	twitch::{
 		TwitchClient,
@@ -13,6 +14,10 @@ use crate::{
 
 impl TwitchClient {
 	pub async fn update_redeems(&self) -> Result<Vec<CustomReward>, Error> {
+		if !CONFIG.read().enable_redeems {
+			return Ok(Vec::new());
+		}
+
 		let user_token = match &self.token {
 			None => return Err(Error::new(ErrorMsg::TokenGone)),
 			Some(t) => t,
@@ -37,6 +42,10 @@ impl TwitchClient {
 	}
 
 	pub async fn sub_new_redeems(&self) -> Result<(), Error> {
+		if !CONFIG.read().enable_redeems {
+			return Ok(());
+		}
+
 		let user_token = match &self.token {
 			None => return Err(Error::new(ErrorMsg::TokenGone)),
 			Some(t) => t,

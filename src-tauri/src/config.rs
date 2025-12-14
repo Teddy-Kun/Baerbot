@@ -1,6 +1,6 @@
 use std::{
 	fs,
-	sync::{Arc, LazyLock},
+	sync::{Arc, LazyLock, nonpoison::RwLock},
 };
 
 use clap::Parser;
@@ -12,7 +12,8 @@ use crate::{error::Error, utils::CFG_DIR_PATH};
 
 // global config
 pub static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);
-pub static DEFAULT_CACHE: LazyLock<Cache> = LazyLock::new(Cache::default);
+pub static CONFIG: LazyLock<RwLock<Config>> =
+	LazyLock::new(|| RwLock::new(Config::read_or_default()));
 
 #[derive(ClapConfig, Clone, Debug, Parser, Deserialize, Serialize)]
 #[command(version, about, long_about = None)]
@@ -29,16 +30,29 @@ pub struct Args {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Cache {
+pub struct Config {
+	pub enable_redeems: bool,
+	// used to track the scopes the token was last initialized with
+	// if changed the token should be forgotten
 	pub scopes: Vec<Scope>,
 }
 
-impl Cache {
+impl Config {
 	pub fn save(&self) -> Result<(), Error> {
 		let p = CFG_DIR_PATH.join("cache.toml");
 		let s = toml::to_string_pretty(self)?;
 		fs::write(p, s)?;
 		Ok(())
+	}
+
+	fn read_or_default() -> Self {
+		match Self::read() {
+			Ok(s) => s,
+			Err(e) => {
+				tracing::warn!("Couldn't open config: {e}");
+				Self::default()
+			}
+		}
 	}
 
 	pub fn read() -> Result<Self, Error> {
@@ -53,9 +67,10 @@ impl Cache {
 	}
 }
 
-impl Default for Cache {
+impl Default for Config {
 	fn default() -> Self {
 		Self {
+			enable_redeems: true,
 			scopes: vec![
 				Scope::ChatEdit,
 				Scope::ChatRead,

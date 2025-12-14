@@ -1,10 +1,12 @@
+#![warn(clippy::indexing_slicing)]
+#![feature(trim_prefix_suffix)]
+#![feature(nonpoison_rwlock)]
+#![feature(sync_nonpoison)]
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::ops::Deref;
-
 use baerbot_lib::{
-	config::{Cache, DEFAULT_CACHE},
+	config::{CONFIG, Config},
 	twitch,
 };
 
@@ -14,16 +16,19 @@ mod tauri;
 fn main() {
 	logs::setup_logging();
 
-	let def_cache = DEFAULT_CACHE.deref();
-	if let Ok(disk_cache) = Cache::read()
-		&& !def_cache.equal_scope(&disk_cache)
-	{
+	let def_config = Config::default();
+	let mut disk_config = CONFIG.write();
+	if !def_config.equal_scope(&disk_config) {
 		tracing::debug!("Changed scopes detected. Forgetting old token");
 		_ = twitch::auth::forget_token();
 	}
 
-	if let Err(e) = def_cache.save() {
+	if let Err(e) = def_config.save() {
 		tracing::warn!("Couldn't save current disk version: {e}");
+		match Config::read() {
+			Err(e) => tracing::warn!("Couldn't update Config: {e}"),
+			Ok(c) => *disk_config = c,
+		}
 	};
 
 	tauri::run()
