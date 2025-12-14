@@ -3,13 +3,13 @@ alias r := run
 alias bw := build-win
 
 build:
-    export $(cat .env | xargs) && bun tauri build --bundles deb,rpm -- -Z build-std
+    export $(cat .env | xargs) && bun tauri build --bundles deb,rpm
 
 run:
-    export $(cat .env | xargs) && bun tauri dev -- -Z build-std -- -d
+    export $(cat .env | xargs) && bun tauri dev -- -- -d
 
 build-win:
-    export $(cat .env | xargs) && bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc -- -Z build-std
+    export $(cat .env | xargs) && bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc
 
 test:
     export $(cat .env | xargs) && cd src-tauri && cargo test
