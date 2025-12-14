@@ -61,8 +61,8 @@ pub async fn chat_listener(twitch_client: &mut TwitchClient) -> Result<JoinHandl
 }
 
 fn register_active_chatter(name: Box<str>) {
-	let unix = get_unix();
 	spawn(async move {
+		let unix = get_unix();
 		let mut active_chatters = ACTIVE_CHATTERS.lock().await;
 		active_chatters.insert(name, unix);
 	});
@@ -102,7 +102,10 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 	};
 	let (prefix, msg) = match params.get(1) {
 		None => return Ok(()),
-		Some(p) => p.split_at(1),
+		Some(p) => match p.split_at_checked(1) {
+			None => return Ok(()),
+			Some(s) => s,
+		},
 	};
 
 	register_active_chatter(Box::from(chatter_name));
