@@ -45,9 +45,6 @@ async fn internal_twitch_auth(client: &TwitchClient) -> Result<UserToken, Error>
 
 	if let Err(e) = save_token(&token).await {
 		tracing::warn!("Failed to save token: {:#?}", e);
-
-		// Panic until I figure out why its broken
-		panic!("Failed to save token: {:#?}", e);
 	};
 
 	Ok(token)
