@@ -96,18 +96,17 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 
 	let params = &server_msg.source().params;
 
-	if params.is_empty() {
-		return Ok(());
-	}
+	let chatter_name = match params.first() {
+		None => return Ok(()),
+		Some(p) => p.as_str(),
+	};
+	let (prefix, msg) = match params.get(1) {
+		None => return Ok(()),
+		Some(p) => p.split_at(1),
+	};
 
-	let chatter_name = params[0].as_str();
 	register_active_chatter(Box::from(chatter_name));
 
-	if params.len() != 2 {
-		return Ok(());
-	}
-
-	let (prefix, msg) = params[1].split_at(1);
 	let msg = msg.to_lowercase();
 
 	if (msg.contains('.') || msg.contains("dot")) && msg.contains("cheap viewers") {
