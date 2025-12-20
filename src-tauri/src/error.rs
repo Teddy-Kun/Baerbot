@@ -1,10 +1,18 @@
-use std::{error::Error as StdError, fmt::Display};
+use std::{
+	error::Error as StdError,
+	fmt::{Debug, Display},
+};
 
 use serde::Serialize;
 use specta::Type;
+use tokio::sync::{RwLock, SetError};
 use twitch_api::{client::CompatError, helix};
 use twitch_irc::{SecureTCPTransport, login::StaticLoginCredentials};
 use twitch_oauth2::tokens::errors::{DeviceUserTokenExchangeError, ValidationError};
+
+use crate::obs::ObsData;
+
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 // message for the frontend
 #[derive(Debug, Default, Clone, Copy, Serialize, Type, PartialEq, Eq)]
@@ -22,6 +30,7 @@ pub enum ErrorMsg {
 	FeatureDisabled,
 	WebSocketSetup,
 	RedeemRequest,
+	Obs,
 }
 
 impl From<Error> for ErrorMsg {
@@ -153,6 +162,18 @@ impl From<tokio_tungstenite::tungstenite::Error> for Error {
 impl From<helix::ClientRequestError<reqwest::Error>> for Error {
 	fn from(value: helix::ClientRequestError<reqwest::Error>) -> Self {
 		Self::from_err(value.into(), ErrorMsg::Unknown)
+	}
+}
+
+impl From<obws::error::Error> for Error {
+	fn from(value: obws::error::Error) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Obs)
+	}
+}
+
+impl From<SetError<RwLock<ObsData>>> for Error {
+	fn from(value: SetError<RwLock<ObsData>>) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Obs)
 	}
 }
 
