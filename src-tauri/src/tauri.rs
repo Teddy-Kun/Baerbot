@@ -13,6 +13,10 @@ use baerbot_lib::{
 };
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use tauri::{
+	menu::{Menu, MenuItem},
+	tray::TrayIconBuilder,
+};
 use tauri_specta::{Builder, collect_commands};
 use twitch_oauth2::UserToken;
 
@@ -249,9 +253,27 @@ pub fn run() {
 		// .plugin(tauri_plugin_opener::init())
 		.invoke_handler(builder.invoke_handler())
 		.setup(move |app| {
+			let pub_quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+			let menu = Menu::with_items(app, &[&pub_quit])?;
+
+			let tray = TrayIconBuilder::new()
+				.icon(app.default_window_icon().unwrap().clone())
+				.menu(&menu)
+				.on_menu_event(|app, event| match event.id.as_ref() {
+					"quit" => app.exit(0),
+					_ => {}
+				})
+				.build(app)?;
 			// This is required if you want to use events
 			builder.mount_events(app);
 			Ok(())
+		})
+		.on_window_event(|window, event| match event {
+			tauri::WindowEvent::CloseRequested { api, .. } => {
+				window.hide().unwrap();
+				api.prevent_close();
+			}
+			_ => {}
 		})
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
