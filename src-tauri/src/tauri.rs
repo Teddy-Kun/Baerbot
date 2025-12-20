@@ -1,6 +1,7 @@
 use baerbot_lib::{
 	config::CONFIG,
 	error::ErrorMsg,
+	obs,
 	os_color::{ColorSchemeAccent, get_color_scheme},
 	twitch::{
 		self, TWITCH_CLIENT,
@@ -182,6 +183,17 @@ async fn toggle_disable_action(key: Box<str>) -> Option<bool> {
 	toggle_action(key.as_ref())
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn connect_obs() -> Result<(), ErrorMsg> {
+	if let Err(err) = obs::init_websocket().await {
+		tracing::error!("Couldn't connect to OBS: {err}");
+		return Err(err.msg);
+	}
+
+	Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -198,7 +210,8 @@ pub fn run() {
 		get_current_logs,
 		get_redeems,
 		toggle_disable_action,
-		redeems_enabled
+		redeems_enabled,
+		connect_obs
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

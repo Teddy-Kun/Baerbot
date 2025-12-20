@@ -85,6 +85,12 @@ impl Display for Error {
 	}
 }
 
+impl From<&'static str> for Error {
+	fn from(value: &'static str) -> Self {
+		Self::from_err(anyhow::Error::msg(value), ErrorMsg::Unknown)
+	}
+}
+
 impl From<ErrorMsg> for Error {
 	fn from(value: ErrorMsg) -> Self {
 		Self::new(value)

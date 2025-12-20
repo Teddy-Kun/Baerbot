@@ -61,6 +61,14 @@ async toggleDisableAction(key: string) : Promise<boolean | null> {
 },
 async redeemsEnabled() : Promise<boolean> {
     return await TAURI_INVOKE("redeems_enabled");
+},
+async connectObs() : Promise<Result<null, ErrorMsg>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("connect_obs") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
