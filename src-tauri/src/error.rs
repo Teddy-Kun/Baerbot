@@ -10,7 +10,7 @@ use twitch_api::{client::CompatError, helix};
 use twitch_irc::{SecureTCPTransport, login::StaticLoginCredentials};
 use twitch_oauth2::tokens::errors::{DeviceUserTokenExchangeError, ValidationError};
 
-use crate::obs::ObsData;
+use crate::obs::websocket::ObsData;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -30,7 +30,8 @@ pub enum ErrorMsg {
 	FeatureDisabled,
 	WebSocketSetup,
 	RedeemRequest,
-	Obs,
+	ObsWS,
+	ObsOverlay,
 }
 
 impl From<Error> for ErrorMsg {
@@ -173,13 +174,13 @@ impl From<helix::ClientRequestError<reqwest::Error>> for Error {
 
 impl From<obws::error::Error> for Error {
 	fn from(value: obws::error::Error) -> Self {
-		Self::from_err(value.into(), ErrorMsg::Obs)
+		Self::from_err(value.into(), ErrorMsg::ObsWS)
 	}
 }
 
 impl From<SetError<RwLock<ObsData>>> for Error {
 	fn from(value: SetError<RwLock<ObsData>>) -> Self {
-		Self::from_err(value.into(), ErrorMsg::Obs)
+		Self::from_err(value.into(), ErrorMsg::ObsWS)
 	}
 }
 

@@ -186,12 +186,27 @@ async fn toggle_disable_action(key: Box<str>) -> Option<bool> {
 #[tauri::command]
 #[specta::specta]
 async fn connect_obs() -> Result<(), ErrorMsg> {
-	if let Err(err) = obs::init_websocket().await {
-		tracing::error!("Couldn't connect to OBS: {err}");
-		return Err(err.msg);
+	match obs::websocket::init_websocket().await {
+		Ok(()) => Ok(()),
+		Err(err) => {
+			let err = err.try_set_msg(ErrorMsg::ObsWS);
+			tracing::error!("Couldn't connect to OBS: {err}");
+			Err(err.msg)
+		}
 	}
+}
 
-	Ok(())
+#[tauri::command]
+#[specta::specta]
+async fn init_obs_overlay() -> Result<(), ErrorMsg> {
+	match obs::overlay::init_overlay().await {
+		Ok(()) => Ok(()),
+		Err(err) => {
+			let err = err.try_set_msg(ErrorMsg::ObsOverlay);
+			tracing::error!("Couldn't host overlay: {err}");
+			Err(err.msg)
+		}
+	}
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -211,7 +226,8 @@ pub fn run() {
 		get_redeems,
 		toggle_disable_action,
 		redeems_enabled,
-		connect_obs
+		connect_obs,
+		init_obs_overlay
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

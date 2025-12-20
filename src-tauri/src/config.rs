@@ -39,18 +39,22 @@ pub struct Args {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// Config for the OBS Websocket stuff
 pub struct ObsConfig {
-	pub enable: bool,
-	pub url: Arc<str>,
-	pub port: u16,
+	pub enable_host: bool,
+	pub enable_ws: bool,
+	pub url: Box<str>,
+	pub host_port: u16,
+	pub ws_port: u16,
 	pub password: Option<Arc<str>>,
 }
 
 impl Default for ObsConfig {
 	fn default() -> Self {
 		Self {
-			enable: false,
-			url: Arc::from("localhost"),
-			port: 4455,
+			enable_host: false,
+			enable_ws: false,
+			url: Box::from("localhost"),
+			host_port: 8564, // chosen at random
+			ws_port: 4455,   // should be the OBS default one
 			password: None,
 		}
 	}
@@ -59,7 +63,7 @@ impl Default for ObsConfig {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
 	pub enable_redeems: bool,
-	pub obs: ObsConfig,
+	pub obs: Option<ObsConfig>,
 	// used to track the scopes the token was last initialized with
 	// if changed the token should be forgotten
 	pub scopes: Vec<Scope>,
@@ -104,7 +108,7 @@ impl Default for Config {
 	fn default() -> Self {
 		Self {
 			enable_redeems: true,
-			obs: ObsConfig::default(),
+			obs: Some(ObsConfig::default()),
 			scopes: vec![
 				Scope::ChatEdit,
 				Scope::ChatRead,
