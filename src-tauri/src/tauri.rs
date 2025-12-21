@@ -14,8 +14,9 @@ use baerbot_lib::{
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{
-	menu::{Menu, MenuItem},
-	tray::TrayIconBuilder,
+	AppHandle, Manager, Wry,
+	menu::{IsMenuItem, Menu, MenuItem},
+	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_specta::{Builder, collect_commands};
 use twitch_oauth2::UserToken;
@@ -254,13 +255,35 @@ pub fn run() {
 		.invoke_handler(builder.invoke_handler())
 		.setup(move |app| {
 			let pub_quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-			let menu = Menu::with_items(app, &[&pub_quit])?;
+			let mut menu_items: Vec<&dyn IsMenuItem<Wry>> = Vec::with_capacity(2);
+			menu_items.push(&pub_quit);
+
+			#[cfg(target_os = "linux")]
+			let show = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
+			#[cfg(target_os = "linux")]
+			menu_items.push(&show);
+
+			let menu = Menu::with_items(app, menu_items.as_slice())?;
 
 			let _tray = TrayIconBuilder::new()
+				.show_menu_on_left_click(false)
 				.icon(app.default_window_icon().unwrap().clone())
 				.menu(&menu)
+				.on_tray_icon_event(|app, event| {
+					if let TrayIconEvent::Click {
+						id: _id,
+						position: _position,
+						rect: _rect,
+						button,
+						button_state: _button_state,
+					} = event && button == MouseButton::Left
+					{
+						show_window(app.app_handle());
+					}
+				})
 				.on_menu_event(|app, event| match event.id.as_ref() {
 					"quit" => app.exit(0),
+					"show" => show_window(app),
 					_ => {}
 				})
 				.build(app)?;
@@ -268,13 +291,38 @@ pub fn run() {
 			builder.mount_events(app);
 			Ok(())
 		})
-		.on_window_event(|window, event| match event {
-			tauri::WindowEvent::CloseRequested { api, .. } => {
-				window.hide().unwrap();
+		.on_window_event(|window, event| {
+			if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+				if let Err(e) = window.hide() {
+					tracing::error!("Couldn't hide window {e}");
+					return;
+				}
 				api.prevent_close();
 			}
-			_ => {}
 		})
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
+}
+
+fn show_window(app: &AppHandle) {
+	let window = match app.get_webview_window("main") {
+		Some(w) => w,
+		None => {
+			tracing::error!("Couldn't get window handle");
+			return;
+		}
+	};
+
+	if let Err(e) = window.show() {
+		tracing::error!("Couldn't show window: {e}");
+		return;
+	}
+
+	if let Err(e) = window.unminimize() {
+		tracing::warn!("Couldn't unminimize window {e}");
+	}
+
+	if let Err(e) = window.set_focus() {
+		tracing::warn!("Couldn't focus window {e}");
+	}
 }
