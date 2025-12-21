@@ -95,7 +95,7 @@ impl Config {
 	}
 
 	pub fn read() -> Result<Self, Error> {
-		let p = CFG_DIR_PATH.join("cache.toml");
+		let p = CFG_DIR_PATH.join("config.toml");
 		let s = fs::read_to_string(p)?;
 		let c = toml::from_str(s.as_str())?;
 		Ok(c)
