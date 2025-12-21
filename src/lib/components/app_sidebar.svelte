@@ -30,6 +30,7 @@
 				<Tabs.Trigger class="w-full" value="actions">
 					Actions
 				</Tabs.Trigger>
+				<Tabs.Trigger class="w-full" value="obs">OBS</Tabs.Trigger>
 				<Tabs.Trigger class="w-full" value="logs">Logs</Tabs.Trigger>
 			</Tabs.List>
 		</Tabs.Root>

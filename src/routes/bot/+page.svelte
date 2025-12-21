@@ -4,6 +4,7 @@
 	import { commands } from "$lib/bindings";
 	import BotActions from "$lib/components/bot_actions.svelte";
 	import Logs from "$lib/components/logs.svelte";
+	import Obs from "$lib/components/obs.svelte";
 	import store from "$lib/store.svelte";
 	import { onMount } from "svelte";
 
@@ -21,6 +22,8 @@
 	<div class="flex flex-col size-full p-4 gap-4">
 		{#if store.current_tab === "actions"}
 			<BotActions />
+		{:else if store.current_tab === "obs"}
+			<Obs />
 		{:else if store.current_tab === "logs"}
 			<Logs />
 		{/if}
