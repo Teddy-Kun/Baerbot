@@ -33,7 +33,8 @@ pub async fn twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
 async fn internal_twitch_auth(client: &TwitchClient) -> Result<UserToken, Error> {
 	let client_id = ClientId::new(env!("API_KEY").to_string());
 
-	let mut builder = DeviceUserTokenBuilder::new(client_id, Config::default().scopes);
+	// unwrap is safe here, default Config has scopes
+	let mut builder = DeviceUserTokenBuilder::new(client_id, Config::default().scopes.unwrap());
 	let code = builder.start(&client.client).await?;
 
 	tracing::debug!("code: {:#?}", code);

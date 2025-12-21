@@ -39,22 +39,22 @@ pub struct Args {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// Config for the OBS Websocket stuff
 pub struct ObsConfig {
-	pub enable_host: bool,
-	pub enable_ws: bool,
-	pub url: Box<str>,
-	pub host_port: u16,
-	pub ws_port: u16,
+	pub enable_host: Option<bool>,
+	pub enable_ws: Option<bool>,
+	pub url: Option<Box<str>>,
+	pub host_port: Option<u16>,
+	pub ws_port: Option<u16>,
 	pub password: Option<Arc<str>>,
 }
 
 impl Default for ObsConfig {
 	fn default() -> Self {
 		Self {
-			enable_host: false,
-			enable_ws: false,
-			url: Box::from("localhost"),
-			host_port: 8564, // chosen at random
-			ws_port: 4455,   // should be the OBS default one
+			enable_host: Some(false),
+			enable_ws: Some(false),
+			url: Some(Box::from("localhost")),
+			host_port: Some(8564), // chosen at random
+			ws_port: Some(4455),   // should be the OBS default one
 			password: None,
 		}
 	}
@@ -62,16 +62,18 @@ impl Default for ObsConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-	pub enable_redeems: bool,
+	pub use_os_color: Option<bool>,
+	pub custom_color: Option<Box<str>>,
+	pub enable_redeems: Option<bool>,
 	pub obs: Option<ObsConfig>,
 	// used to track the scopes the token was last initialized with
 	// if changed the token should be forgotten
-	pub scopes: Vec<Scope>,
+	pub scopes: Option<Vec<Scope>>,
 }
 
 impl Config {
 	pub fn save(&self) -> Result<(), Error> {
-		let p = CFG_DIR_PATH.join("cache.toml");
+		let p = CFG_DIR_PATH.join("config.toml");
 		let s = toml::to_string_pretty(self)?;
 		fs::write(p, s)?;
 		Ok(())
@@ -107,9 +109,11 @@ impl Config {
 impl Default for Config {
 	fn default() -> Self {
 		Self {
-			enable_redeems: true,
+			use_os_color: Some(true),
+			custom_color: None,
+			enable_redeems: Some(true),
 			obs: Some(ObsConfig::default()),
-			scopes: vec![
+			scopes: Some(vec![
 				Scope::ChatEdit,
 				Scope::ChatRead,
 				Scope::ChannelReadRedemptions,
@@ -119,7 +123,7 @@ impl Default for Config {
 				Scope::ModeratorReadChatters,
 				Scope::ModeratorReadVips,
 				Scope::ChannelReadSubscriptions,
-			],
+			]),
 		}
 	}
 }

@@ -3,7 +3,7 @@ use std::{fmt::Debug, sync::Arc};
 use tokio::{fs, io::AsyncWriteExt, net::TcpListener, spawn, sync::RwLock, task::JoinHandle};
 
 use crate::{
-	config::CONFIG,
+	config::{CONFIG, ObsConfig},
 	error::{Error, Result},
 };
 
@@ -32,7 +32,7 @@ static OBS_OVERLAY: RwLock<Option<ObsOverlay>> = RwLock::const_new(None);
 /// Returns a single HTML document read from disk upon initialization
 pub async fn init_overlay() -> Result<()> {
 	let cfg = CONFIG.read().obs.clone().unwrap_or_default();
-	if !cfg.enable_host {
+	if !cfg.enable_host.unwrap_or(false) {
 		return Err(Error::from("OBS Host disabled"));
 	}
 
@@ -42,7 +42,12 @@ pub async fn init_overlay() -> Result<()> {
 	};
 	let loop_clone = html.clone();
 
-	let listener = TcpListener::bind(format!("127.0.0.1:{}", cfg.host_port)).await?;
+	let listener = TcpListener::bind(format!(
+		"127.0.0.1:{}",
+		cfg.host_port
+			.unwrap_or(ObsConfig::default().host_port.unwrap())
+	))
+	.await?;
 
 	let join_handle = spawn(async move {
 		loop {

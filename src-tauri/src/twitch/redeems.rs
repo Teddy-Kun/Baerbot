@@ -14,7 +14,7 @@ use crate::{
 
 impl TwitchClient {
 	pub async fn update_redeems(&self) -> Result<Vec<CustomReward>, Error> {
-		if !CONFIG.read().enable_redeems {
+		if !CONFIG.read().enable_redeems.unwrap_or(true) {
 			return Ok(Vec::new());
 		}
 
@@ -42,7 +42,7 @@ impl TwitchClient {
 	}
 
 	pub async fn sub_new_redeems(&self) -> Result<(), Error> {
-		if !CONFIG.read().enable_redeems {
+		if !CONFIG.read().enable_redeems.unwrap_or(true) {
 			return Ok(());
 		}
 

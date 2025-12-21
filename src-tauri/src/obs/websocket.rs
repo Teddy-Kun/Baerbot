@@ -4,7 +4,7 @@ use obws::responses::general::Version;
 use tokio::sync::RwLock;
 
 use crate::{
-	config::CONFIG,
+	config::{CONFIG, ObsConfig},
 	error::{Error, ErrorMsg, Result},
 };
 pub struct ObsData {
@@ -22,11 +22,14 @@ static OBS_CLIENT: RwLock<Option<ObsData>> = RwLock::const_new(None);
 
 pub async fn init_websocket() -> Result<()> {
 	let cfg = CONFIG.read().obs.clone().unwrap_or_default();
-	if !cfg.enable_ws {
+	if !cfg.enable_ws.unwrap_or(false) {
 		return Err(Error::from("OBS Websocket disabled").try_set_msg(ErrorMsg::ObsWS));
 	}
 
-	let client = obws::Client::connect(cfg.url, cfg.ws_port, cfg.password).await?;
+	let url = cfg.url.unwrap_or(ObsConfig::default().url.unwrap());
+	let ws_port = cfg.ws_port.unwrap_or(ObsConfig::default().ws_port.unwrap());
+	let password = cfg.password;
+	let client = obws::Client::connect(url, ws_port, password).await?;
 	let version = client.general().version().await?;
 	tracing::info!("Connected to OBS Version {}", version.obs_version);
 

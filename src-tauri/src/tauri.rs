@@ -89,7 +89,7 @@ async fn get_accent_color() -> Option<ColorSchemeAccent> {
 #[tauri::command]
 #[specta::specta]
 fn redeems_enabled() -> bool {
-	CONFIG.read().enable_redeems
+	CONFIG.read().enable_redeems.unwrap_or(true)
 }
 
 #[tauri::command]
