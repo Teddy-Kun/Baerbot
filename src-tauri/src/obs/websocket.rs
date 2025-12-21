@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Arc};
 
 use obws::responses::general::Version;
 use tokio::sync::RwLock;
@@ -18,7 +18,7 @@ impl Debug for ObsData {
 	}
 }
 
-static OBS_CLIENT: RwLock<Option<ObsData>> = RwLock::const_new(None);
+static OBS_CLIENT: RwLock<Option<Arc<ObsData>>> = RwLock::const_new(None);
 
 pub async fn init_websocket() -> Result<()> {
 	let cfg = CONFIG.read().obs.clone().unwrap_or_default();
@@ -30,14 +30,41 @@ pub async fn init_websocket() -> Result<()> {
 	let ws_port = cfg.ws_port.unwrap_or(ObsConfig::default().ws_port.unwrap());
 	let password = cfg.password;
 	let client = obws::Client::connect(url, ws_port, password).await?;
+
 	let version = client.general().version().await?;
 	tracing::info!("Connected to OBS Version {}", version.obs_version);
 
 	let mut cl = OBS_CLIENT.write().await;
-	*cl = Some(ObsData {
+	*cl = Some(Arc::new(ObsData {
 		websocket: client,
 		version,
+	}));
+
+	Ok(())
+}
+
+pub async fn mute_input() -> Result<()> {
+	let reader = match OBS_CLIENT.read().await.clone() {
+		Some(r) => r,
+		None => return Ok(()),
+	};
+	let inputs = reader.websocket.inputs().list(None).await?;
+	let futures = inputs.iter().map(async |i| {
+		return (
+			reader
+				.websocket
+				.inputs()
+				.set_muted(i.id.clone().into(), true)
+				.await,
+			&i.id,
+		);
 	});
+
+	for req in futures {
+		if let (Err(e), input_id) = req.await {
+			tracing::warn!("Couldn't mute input '{}': {}", input_id.name, e)
+		}
+	}
 
 	Ok(())
 }
