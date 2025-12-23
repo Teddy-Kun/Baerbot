@@ -14,8 +14,8 @@ use baerbot_lib::{
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{
-	AppHandle, Manager, Wry,
-	menu::{IsMenuItem, Menu, MenuItem},
+	AppHandle, Manager,
+	menu::{Menu, MenuItem},
 	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_specta::{Builder, collect_commands};
@@ -254,16 +254,9 @@ pub fn run() {
 		// .plugin(tauri_plugin_opener::init())
 		.invoke_handler(builder.invoke_handler())
 		.setup(move |app| {
-			let pub_quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-			let mut menu_items: Vec<&dyn IsMenuItem<Wry>> = Vec::with_capacity(2);
-			menu_items.push(&pub_quit);
-
-			#[cfg(target_os = "linux")]
+			let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 			let show = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
-			#[cfg(target_os = "linux")]
-			menu_items.push(&show);
-
-			let menu = Menu::with_items(app, menu_items.as_slice())?;
+			let menu = Menu::with_items(app, &[&show, &quit])?;
 
 			let _tray = TrayIconBuilder::new()
 				.show_menu_on_left_click(false)
