@@ -67,6 +67,7 @@ regex = "1.11.3"
 tokio-tungstenite = { version = "0.28.0", features = ["native-tls", "tokio-native-tls"] }
 dashmap = "6.1.0"
 obws = "0.14.0"
+tts = "0.26.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ashpd = { version = "0.12.0", features = ["tokio"], default-features = false }
