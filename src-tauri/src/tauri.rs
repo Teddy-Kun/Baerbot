@@ -223,8 +223,8 @@ fn get_tts_voices() -> Vec<VoiceData> {
 
 #[tauri::command]
 #[specta::specta]
-fn test_tts(voice: VoiceData) -> Result<(), ErrorMsg> {
-	baerbot_lib::tts::speak("This is a test message", Some(voice))?;
+fn test_tts(message: String, voice: VoiceData) -> Result<(), ErrorMsg> {
+	baerbot_lib::tts::speak(message, Some(voice))?;
 	Ok(())
 }
 

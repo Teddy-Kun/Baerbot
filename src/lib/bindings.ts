@@ -81,9 +81,9 @@ async initObsOverlay() : Promise<Result<null, ErrorMsg>> {
 async getTtsVoices() : Promise<VoiceData[]> {
     return await TAURI_INVOKE("get_tts_voices");
 },
-async testTts(voice: VoiceData) : Promise<Result<null, ErrorMsg>> {
+async testTts(message: string, voice: VoiceData) : Promise<Result<null, ErrorMsg>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("test_tts", { voice }) };
+    return { status: "ok", data: await TAURI_INVOKE("test_tts", { message, voice }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
