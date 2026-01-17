@@ -15,6 +15,6 @@
 	});
 </script>
 
-<main class="w-[100vw] h-[100vh] flex items-center justify-center">
+<main class="w-screen h-screen flex items-center justify-center">
 	<Hamster />
 </main>
