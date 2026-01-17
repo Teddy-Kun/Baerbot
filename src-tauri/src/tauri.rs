@@ -3,6 +3,7 @@ use baerbot_lib::{
 	error::ErrorMsg,
 	obs,
 	os_color::{ColorSchemeAccent, get_color_scheme},
+	tts::VoiceData,
 	twitch::{
 		self, TWITCH_CLIENT,
 		actions::{Action, toggle_disable_action as toggle_action},
@@ -214,6 +215,12 @@ async fn init_obs_overlay() -> Result<(), ErrorMsg> {
 	}
 }
 
+#[tauri::command]
+#[specta::specta]
+fn get_tts_voices() -> Vec<VoiceData> {
+	baerbot_lib::tts::get_voices()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -232,7 +239,8 @@ pub fn run() {
 		toggle_disable_action,
 		redeems_enabled,
 		connect_obs,
-		init_obs_overlay
+		init_obs_overlay,
+		get_tts_voices
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
