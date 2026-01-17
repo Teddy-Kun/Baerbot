@@ -31,6 +31,7 @@
 					Actions
 				</Tabs.Trigger>
 				<Tabs.Trigger class="w-full" value="obs">OBS</Tabs.Trigger>
+				<Tabs.Trigger class="w-full" value="tts">TTS</Tabs.Trigger>
 				<Tabs.Trigger class="w-full" value="logs">Logs</Tabs.Trigger>
 			</Tabs.List>
 		</Tabs.Root>

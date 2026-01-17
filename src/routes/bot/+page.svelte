@@ -5,6 +5,7 @@
 	import BotActions from "$lib/components/bot_actions.svelte";
 	import Logs from "$lib/components/logs.svelte";
 	import Obs from "$lib/components/obs.svelte";
+	import TtsSettings from "$lib/components/tts_settings.svelte";
 	import store from "$lib/store.svelte";
 	import { onMount } from "svelte";
 
@@ -24,6 +25,8 @@
 			<BotActions />
 		{:else if store.current_tab === "obs"}
 			<Obs />
+		{:else if store.current_tab === "tts"}
+			<TtsSettings />
 		{:else if store.current_tab === "logs"}
 			<Logs />
 		{/if}
