@@ -221,6 +221,13 @@ fn get_tts_voices() -> Vec<VoiceData> {
 	baerbot_lib::tts::get_voices()
 }
 
+#[tauri::command]
+#[specta::specta]
+fn test_tts(voice: VoiceData) -> Result<(), ErrorMsg> {
+	baerbot_lib::tts::speak("This is a test message", Some(voice))?;
+	Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -240,7 +247,8 @@ pub fn run() {
 		redeems_enabled,
 		connect_obs,
 		init_obs_overlay,
-		get_tts_voices
+		get_tts_voices,
+		test_tts
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

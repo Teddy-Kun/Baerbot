@@ -1,12 +1,12 @@
 use std::sync::{LazyLock, nonpoison::RwLock};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use specta::Type;
 use tts::{Features, Tts, Voice};
 
 use crate::error::{Error, Result};
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug, Deserialize, Serialize, Type)]
 pub struct VoiceData {
 	pub language: String,
 	pub name: String,
@@ -15,7 +15,7 @@ pub struct VoiceData {
 pub struct TtsData {
 	tts: tts::Tts,
 	voices: Vec<Voice>,
-	selected_voice: Option<Voice>,
+	selected_voice: usize,
 }
 
 fn init_tts_data() -> Result<TtsData, Error> {
@@ -38,7 +38,7 @@ fn init_tts_data() -> Result<TtsData, Error> {
 	Ok(TtsData {
 		tts,
 		voices,
-		selected_voice: None,
+		selected_voice: 0,
 	})
 }
 
@@ -66,12 +66,48 @@ pub fn get_voices() -> Vec<VoiceData> {
 	}
 }
 
-pub fn speak(s: impl Into<String>) -> Result<(), Error> {
-	if let Some(tts_data) = TTS_DATA.write().as_mut()
-		&& let Some(voice) = &tts_data.selected_voice
+pub fn set_active_voice(voice: VoiceData) -> Result<(), Error> {
+	let mut tts_data = TTS_DATA.write();
+
+	let tts_data = match tts_data.as_mut() {
+		None => return Ok(()),
+		Some(t) => t,
+	};
+
+	let (index, voice) = match tts_data
+		.voices
+		.iter()
+		.enumerate()
+		.find(|(_, v)| v.language() == voice.language && v.name() == voice.name)
 	{
-		tts_data.tts.set_voice(voice)?;
+		Some(v) => v,
+		None => return Err("".into()),
+	};
+
+	tts_data.tts.set_voice(voice)?;
+	tts_data.selected_voice = index;
+
+	Ok(())
+}
+
+pub fn speak(s: impl Into<String>, voice_overwrite: Option<VoiceData>) -> Result<(), Error> {
+	if let Some(tts_data) = TTS_DATA.write().as_mut() {
+		if let Some(overwrite) = &voice_overwrite
+			&& let Some(voice) = tts_data
+				.voices
+				.iter()
+				.find(|v| v.language() == overwrite.language && v.name() == overwrite.name)
+		{
+			tts_data.tts.set_voice(voice)?;
+		}
+
 		tts_data.tts.speak(s, false)?;
+
+		if voice_overwrite.is_some()
+			&& let Some(voice) = tts_data.voices.get(tts_data.selected_voice)
+		{
+			tts_data.tts.set_voice(voice)?;
+		}
 	}
 
 	Ok(())
