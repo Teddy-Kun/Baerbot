@@ -15,7 +15,7 @@ test:
     export $(cat .env | xargs) && cd src-tauri && cargo test
 
 clean:
-    rm -r build && cd src-tauri && cargo clean
+    rm -r build node_modules && cd src-tauri && cargo clean
 
 lint:
     export $(cat .env | xargs) && bun lint:fix && bun check && cd src-tauri && cargo clippy
