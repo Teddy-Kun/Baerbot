@@ -92,7 +92,7 @@ async initObsOverlay() : Promise<Result<null, ErrorMsg>> {
 
 export type Action = { trigger: Trigger; exec: Exec; disabled?: boolean }
 export type ColorSchemeAccent = { hue: number; saturation: number; luminance: number; hex_code: string }
-export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn" | "FeatureDisabled" | "WebSocketSetup" | "RedeemRequest" | "ObsWS" | "ObsOverlay"
+export type ErrorMsg = "Unknown" | "TokenLoad" | "TokenSave" | "TwitchAuth" | "GetColorScheme" | "UsernameGone" | "TokenGone" | "ChatMsgSend" | "AlreadyLoggedIn" | "FeatureDisabled" | "WebSocketSetup" | "RedeemRequest" | "ObsWS" | "ObsOverlay" | "Tts"
 export type Exec = { ChatMsg: string } | { Counter: InnerCounter } | { Timeout: [ExecTarget, number] } | { Ban: ExecTarget } | { Chance: [number, Exec, Exec] }
 export type ExecTarget = "None" | "User" | "Other"
 export type FrontendRedeem = { id: string; color: string; name: string; cost: bigint }

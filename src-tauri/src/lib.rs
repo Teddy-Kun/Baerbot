@@ -9,5 +9,6 @@ pub mod config;
 pub mod error;
 pub mod obs;
 pub mod os_color;
+pub mod tts;
 pub mod twitch;
 pub mod utils;

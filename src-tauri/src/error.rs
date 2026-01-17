@@ -29,6 +29,7 @@ pub enum ErrorMsg {
 	RedeemRequest,
 	ObsWS,
 	ObsOverlay,
+	Tts,
 }
 
 impl From<Error> for ErrorMsg {
@@ -172,6 +173,12 @@ impl From<helix::ClientRequestError<reqwest::Error>> for Error {
 impl From<obws::error::Error> for Error {
 	fn from(value: obws::error::Error) -> Self {
 		Self::from_err(value.into(), ErrorMsg::ObsWS)
+	}
+}
+
+impl From<tts::Error> for Error {
+	fn from(value: tts::Error) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Tts)
 	}
 }
 

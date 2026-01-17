@@ -4,6 +4,7 @@ use std::{
 };
 
 use tauri::async_runtime::{JoinHandle, RwLock};
+use tokio::spawn;
 use twitch_api::{
 	HelixClient,
 	helix::{points::CustomReward, users::User},
@@ -48,6 +49,11 @@ impl Drop for TwitchClient {
 
 impl TwitchClient {
 	pub fn new() -> Self {
+		spawn(async move {
+			if let Err(e) = super::tts::test() {
+				eprintln!("{e}");
+			}
+		});
 		Self::default()
 	}
 
