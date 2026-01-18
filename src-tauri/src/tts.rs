@@ -37,6 +37,11 @@ fn init_tts_data() -> Result<TtsData, Error> {
 	} = tts.supported_features();
 
 	if utterance_callbacks {
+		tts.on_utterance_begin(Some(Box::new(|_| {
+			if let Some(tts_data) = TTS_DATA.write().as_mut() {
+				tts_data.is_speaking = true;
+			}
+		})))?;
 		tts.on_utterance_end(Some(Box::new(|_| {
 			if let Some(tts_data) = TTS_DATA.write().as_mut() {
 				tts_data.is_speaking = false;
@@ -47,6 +52,8 @@ fn init_tts_data() -> Result<TtsData, Error> {
 				tts_data.is_speaking = false;
 			}
 		})))?;
+	} else {
+		tracing::warn!("Utterance-Callbacks are not supported!");
 	}
 
 	let voices: Vec<Voice> = if voice {
@@ -58,6 +65,7 @@ fn init_tts_data() -> Result<TtsData, Error> {
 			}
 		}
 	} else {
+		tracing::warn!("Voices not available!");
 		Vec::new()
 	};
 
@@ -157,10 +165,7 @@ pub fn speak(s: String, voice_overwrite: Option<VoiceData>) -> Result<(), Error>
 			tts_data.tts.set_voice(voice)?;
 		}
 
-		tts_data.is_speaking = true;
-		tracing::debug!("Trying to say \"{s}\"");
 		tts_data.tts.speak(s, false)?;
-		tracing::debug!("Spoke");
 
 		if voice_overwrite.is_some()
 			&& let Some(voice) = tts_data.voices.get(tts_data.selected_voice)
