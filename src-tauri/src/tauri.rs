@@ -1,5 +1,5 @@
 use baerbot_lib::{
-	config::CONFIG,
+	config::{CONFIG, TtsConfig},
 	error::ErrorMsg,
 	obs,
 	os_color::{ColorSchemeAccent, get_color_scheme},
@@ -215,16 +215,40 @@ async fn init_obs_overlay() -> Result<(), ErrorMsg> {
 	}
 }
 
+#[derive(Debug, Serialize, Type)]
+struct VoiceCfg {
+	active: Option<VoiceData>,
+	voices: Vec<VoiceData>,
+}
+
 #[tauri::command]
 #[specta::specta]
-fn get_tts_voices() -> Vec<VoiceData> {
-	baerbot_lib::tts::get_voices()
+fn get_tts_voices() -> VoiceCfg {
+	VoiceCfg {
+		active: baerbot_lib::tts::get_active(),
+		voices: baerbot_lib::tts::get_voices(),
+	}
 }
 
 #[tauri::command]
 #[specta::specta]
 fn test_tts(message: String, voice: VoiceData) -> Result<(), ErrorMsg> {
 	baerbot_lib::tts::speak(message, Some(voice))?;
+	Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+fn set_tts_voice(voice: VoiceData) -> Result<(), ErrorMsg> {
+	baerbot_lib::tts::set_active_voice(&voice)?;
+	{
+		let mut config = CONFIG.write();
+		config.tts = Some(TtsConfig {
+			backend: baerbot_lib::tts::TtsBackend::System,
+			voice: Some(voice),
+		});
+		config.save()?;
+	}
 	Ok(())
 }
 
@@ -248,7 +272,8 @@ pub fn run() {
 		connect_obs,
 		init_obs_overlay,
 		get_tts_voices,
-		test_tts
+		test_tts,
+		set_tts_voice
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

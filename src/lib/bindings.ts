@@ -78,12 +78,20 @@ async initObsOverlay() : Promise<Result<null, ErrorMsg>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getTtsVoices() : Promise<VoiceData[]> {
+async getTtsVoices() : Promise<VoiceCfg> {
     return await TAURI_INVOKE("get_tts_voices");
 },
 async testTts(message: string, voice: VoiceData) : Promise<Result<null, ErrorMsg>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("test_tts", { message, voice }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setTtsVoice(voice: VoiceData) : Promise<Result<null, ErrorMsg>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_tts_voice", { voice }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -109,6 +117,7 @@ export type ExecTarget = "None" | "User" | "Other"
 export type FrontendRedeem = { id: string; color: string; name: string; cost: bigint }
 export type InnerCounter = { counter: number; template: string }
 export type Trigger = { Command: string } | { Redeem: string }
+export type VoiceCfg = { active: VoiceData | null; voices: VoiceData[] }
 export type VoiceData = { language: string; name: string }
 
 /** tauri-specta globals **/

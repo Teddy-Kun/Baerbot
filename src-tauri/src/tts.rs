@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tts::{Features, Tts, Voice};
 
-use crate::error::{Error, Result};
+use crate::{
+	config::CONFIG,
+	error::{Error, Result},
+};
 
 #[derive(Debug, Deserialize, Serialize, Type)]
 pub enum TtsBackend {
@@ -58,10 +61,25 @@ fn init_tts_data() -> Result<TtsData, Error> {
 		Vec::new()
 	};
 
+	let mut voice_index = 0;
+	if let Some(tts_cfg) = CONFIG.read().tts.as_ref()
+		&& let Some(voice) = &tts_cfg.voice
+	{
+		let found_index = voices
+			.iter()
+			.enumerate()
+			.find(|(_, v)| v.language() == voice.language && v.name() == voice.name)
+			.map(|(i, _)| i);
+
+		if let Some(i) = found_index {
+			voice_index = i;
+		}
+	}
+
 	Ok(TtsData {
 		tts,
 		voices,
-		selected_voice: 0,
+		selected_voice: voice_index,
 		is_speaking: false,
 	})
 }
@@ -75,6 +93,16 @@ static TTS_DATA: LazyLock<RwLock<Option<TtsData>>> = LazyLock::new(|| {
 		}
 	})
 });
+
+pub fn get_active() -> Option<VoiceData> {
+	let lock = TTS_DATA.read();
+	let tts_data = lock.as_ref()?;
+	let voice = tts_data.voices.get(tts_data.selected_voice)?;
+	Some(VoiceData {
+		language: voice.language().to_string(),
+		name: voice.name(),
+	})
+}
 
 pub fn get_voices() -> Vec<VoiceData> {
 	match TTS_DATA.read().as_ref() {
@@ -90,7 +118,7 @@ pub fn get_voices() -> Vec<VoiceData> {
 	}
 }
 
-pub fn set_active_voice(voice: VoiceData) -> Result<(), Error> {
+pub fn set_active_voice(voice: &VoiceData) -> Result<(), Error> {
 	let mut tts_data = TTS_DATA.write();
 
 	let tts_data = match tts_data.as_mut() {
