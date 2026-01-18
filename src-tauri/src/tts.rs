@@ -62,8 +62,19 @@ pub trait TtsSystem {
 	fn speak(&mut self, s: String, voice_overwrite: Option<VoiceData>) -> Result<(), Error>;
 }
 
-// TODO: init
-static TTS_DATA: LazyLock<Mutex<Option<TtsData>>> = LazyLock::new(|| Mutex::new(None));
+// TODO: init piper
+static TTS_DATA: LazyLock<Mutex<Option<TtsData>>> = LazyLock::new(|| {
+	Mutex::new(match system::init_tts_config(None, None, None) {
+		Ok(t) => Some(TtsData {
+			cfg: TtsBackendCfg::System(t),
+			is_speaking: false,
+		}),
+		Err(e) => {
+			tracing::error!("Couldn't set up system tts: {e}");
+			None
+		}
+	})
+});
 
 pub fn get_active_voice() -> Option<VoiceData> {
 	TTS_DATA.lock().as_ref()?.cfg.as_trait().get_active_voice()

@@ -1,4 +1,4 @@
-use tts::{Features, Tts, Voice};
+use tts::{Features, Tts, UtteranceId, Voice};
 
 pub struct TtsConfig {
 	voices: Vec<Voice>,
@@ -12,7 +12,11 @@ use crate::{
 	tts::{TtsSystem, VoiceData},
 };
 
-fn init_tts_config() -> Result<TtsConfig, Error> {
+pub fn init_tts_config(
+	begin: Option<Box<dyn FnMut(UtteranceId)>>,
+	end: Option<Box<dyn FnMut(UtteranceId)>>,
+	stop: Option<Box<dyn FnMut(UtteranceId)>>,
+) -> Result<TtsConfig, Error> {
 	let tts = Tts::default()?;
 
 	let Features {
@@ -22,21 +26,9 @@ fn init_tts_config() -> Result<TtsConfig, Error> {
 	} = tts.supported_features();
 
 	if utterance_callbacks {
-		// tts.on_utterance_begin(Some(Box::new(|_| {
-		// 	if let Some(tts_data) = TTS_DATA.write().as_mut() {
-		// 		tts_data.is_speaking = true;
-		// 	}
-		// })))?;
-		// tts.on_utterance_end(Some(Box::new(|_| {
-		// 	if let Some(tts_data) = TTS_DATA.write().as_mut() {
-		// 		tts_data.is_speaking = false;
-		// 	}
-		// })))?;
-		// tts.on_utterance_stop(Some(Box::new(|_| {
-		// 	if let Some(tts_data) = TTS_DATA.write().as_mut() {
-		// 		tts_data.is_speaking = false;
-		// 	}
-		// })))?;
+		tts.on_utterance_begin(begin)?;
+		tts.on_utterance_end(end)?;
+		tts.on_utterance_stop(stop)?;
 	} else {
 		tracing::warn!("Utterance-Callbacks are not supported!");
 	}
