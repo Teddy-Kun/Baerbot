@@ -1,4 +1,4 @@
-use baerbot_lib::{
+use beanybot_lib::{
 	config::{CONFIG, TtsConfig},
 	error::ErrorMsg,
 	obs,
@@ -225,26 +225,26 @@ struct VoiceCfg {
 #[specta::specta]
 fn get_tts_voices() -> VoiceCfg {
 	VoiceCfg {
-		active: baerbot_lib::tts::get_active(),
-		voices: baerbot_lib::tts::get_voices(),
+		active: beanybot_lib::tts::get_active(),
+		voices: beanybot_lib::tts::get_voices(),
 	}
 }
 
 #[tauri::command]
 #[specta::specta]
 fn test_tts(message: String, voice: VoiceData) -> Result<(), ErrorMsg> {
-	baerbot_lib::tts::speak(message, Some(voice))?;
+	beanybot_lib::tts::speak(message, Some(voice))?;
 	Ok(())
 }
 
 #[tauri::command]
 #[specta::specta]
 fn set_tts_voice(voice: VoiceData) -> Result<(), ErrorMsg> {
-	baerbot_lib::tts::set_active_voice(&voice)?;
+	beanybot_lib::tts::set_active_voice(&voice)?;
 	{
 		let mut config = CONFIG.write();
 		config.tts = Some(TtsConfig {
-			backend: baerbot_lib::tts::TtsBackend::System,
+			backend: beanybot_lib::tts::TtsBackend::System,
 			voice: Some(voice),
 		});
 		config.save()?;

@@ -4,7 +4,7 @@ use std::{
 	sync::LazyLock,
 };
 
-use baerbot_lib::{
+use beanybot_lib::{
 	config::ARGS,
 	error::Error,
 	utils::{CFG_DIR_PATH, NAME},

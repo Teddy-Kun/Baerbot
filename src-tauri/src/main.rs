@@ -5,7 +5,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use baerbot_lib::{
+use beanybot_lib::{
 	config::{CONFIG, Config},
 	twitch,
 };

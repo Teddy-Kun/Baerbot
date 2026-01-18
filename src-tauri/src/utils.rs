@@ -7,7 +7,7 @@ use std::{
 
 pub static NAME: &str = env!("CARGO_PKG_NAME");
 
-pub static NAME_CAPITALIZED: &str = "Bärbot";
+pub static NAME_CAPITALIZED: &str = "Beanybot";
 
 pub static CFG_DIR_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 	match dirs::config_dir() {
