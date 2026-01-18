@@ -87,4 +87,4 @@ incremental = true
 codegen-units = 16
 lto = "thin"
 # lto = true
-strip = true
+strip = "debuginfo"
