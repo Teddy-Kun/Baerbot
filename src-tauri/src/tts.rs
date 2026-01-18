@@ -16,12 +16,30 @@ pub struct TtsData {
 	tts: tts::Tts,
 	voices: Vec<Voice>,
 	selected_voice: usize,
+	is_speaking: bool,
 }
 
 fn init_tts_data() -> Result<TtsData, Error> {
 	let tts = Tts::default()?;
 
-	let Features { voice, .. } = tts.supported_features();
+	let Features {
+		utterance_callbacks,
+		voice,
+		..
+	} = tts.supported_features();
+
+	if utterance_callbacks {
+		tts.on_utterance_end(Some(Box::new(|_| {
+			if let Some(tts_data) = TTS_DATA.write().as_mut() {
+				tts_data.is_speaking = false;
+			}
+		})))?;
+		tts.on_utterance_stop(Some(Box::new(|_| {
+			if let Some(tts_data) = TTS_DATA.write().as_mut() {
+				tts_data.is_speaking = false;
+			}
+		})))?;
+	}
 
 	let voices: Vec<Voice> = if voice {
 		match tts.voices() {
@@ -101,6 +119,7 @@ pub fn speak(s: impl Into<String>, voice_overwrite: Option<VoiceData>) -> Result
 			tts_data.tts.set_voice(voice)?;
 		}
 
+		tts_data.is_speaking = true;
 		tts_data.tts.speak(s, false)?;
 
 		if voice_overwrite.is_some()
