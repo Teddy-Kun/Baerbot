@@ -6,11 +6,12 @@ export type ExecKey = KeysOfUnion<Exec>;
 
 // key_translations breaks eslint indentation here for some reason
 export const KeyTranslations = Object.freeze({
-	Ban: "Ban User",
-	Chance: "Random",
-	ChatMsg: "Chat-Message",
-	Counter: "Count something",
-	Timeout: "Timeout User",
+  Ban: "Ban User",
+  Chance: "Random",
+  ChatMsg: "Chat-Message",
+  Counter: "Count something",
+  Timeout: "Timeout User",
+  Tts: "Text-To-Speech",
 } satisfies { [k in ExecKey]: string | null });
 
 export const AllKeys = Object.freeze(Object.keys(KeyTranslations) as ExecKey[]);
@@ -18,13 +19,14 @@ export const AllKeys = Object.freeze(Object.keys(KeyTranslations) as ExecKey[]);
 export const TEDDY_WIP: string = "Teddy is still working on it 🧸⚙️";
 
 export const Descriptions = Object.freeze({
-	Ban: "Other: A user specified by the one activating the action. User: The one activating the action",
-	Chance:
-		"Randomly executes one of the two options with the chance given. You can technically chain them into multiple randoms, but the UI is really not made for it.",
-	ChatMsg:
-		"Say a message in chat. You can use {a..b} to generate a random number, in the range of `a` up to and including `b`. For example {1..6} would be like rolling a 6-sided dice.",
-	Counter:
-		'Count something, for example !death. The message input below will be displayed. The current count replaces all instances of "{}" in the text. Will also add !command set and !command reset',
-	Timeout:
-		"Other: A user specified by the one activating the action. User: The one activating the action",
+  Ban: "Other: A user specified by the one activating the action. User: The one activating the action",
+  Chance:
+    "Randomly executes one of the two options with the chance given. You can technically chain them into multiple randoms, but the UI is really not made for it.",
+  ChatMsg:
+    "Say a message in chat. You can use {a..b} to generate a random number, in the range of `a` up to and including `b`. For example {1..6} would be like rolling a 6-sided dice.",
+  Counter:
+    'Count something, for example !death. The message input below will be displayed. The current count replaces all instances of "{}" in the text. Will also add !command set and !command reset',
+  Timeout:
+    "Other: A user specified by the one activating the action. User: The one activating the action",
+  Tts: "Either just say a specific text, or say what the user said. {user} will get replaced with the username.",
 } satisfies { [k in ExecKey]: string | null });

@@ -18,6 +18,7 @@ use specta::Type;
 
 use crate::{
 	error::Error,
+	tts,
 	twitch::{TWITCH_CLIENT, counter::TwitchCounter},
 	utils::ACTION_DIR,
 };
@@ -112,6 +113,7 @@ pub enum Exec {
 	Timeout(ExecTarget, u32),
 	Ban(ExecTarget),
 	Chance(f64, Box<Exec>, Box<Exec>),
+	Tts(ArcStr),
 }
 
 impl Exec {
@@ -210,6 +212,24 @@ impl Exec {
 						}
 					}
 				}
+			}
+			Exec::Tts(specific_message) => {
+				tracing::debug!("prompt: {prompt:?}");
+
+				let message: String;
+				if !specific_message.is_empty() {
+					message = specific_message.replace("{user}", user);
+				} else if let Some(prompt) = prompt {
+					message = format!("{user} said {prompt}");
+				} else {
+					tracing::warn!("TTS without any text?");
+					return None;
+				}
+				if let Err(e) = tts::speak(message, None) {
+					tracing::error!("Error executing tts action: {e}");
+					return None;
+				};
+				Some(())
 			}
 		}
 	}
@@ -357,6 +377,8 @@ pub async fn save_actions() -> Result<(), Error> {
 }
 
 fn save_action(action: &Action) -> Result<(), Error> {
+	create_dir_all(ACTION_DIR.as_path())?;
+
 	let p = ACTION_DIR.join(format!("{}.toml", action.trigger.deref()));
 
 	tracing::info!("action path {p:?}");

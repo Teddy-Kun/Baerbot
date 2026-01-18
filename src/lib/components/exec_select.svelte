@@ -79,6 +79,14 @@
 			valid = v;
 		}}
 	/>
+{:else if exec_type === "Tts"}
+	<TextInput
+		class="col-span-2"
+		update={(text, _): void => {
+			child_exec = { Tts: text };
+			valid = true;
+		}}
+	/>
 {:else}
 	<ExecWip
 		update={(v): void => {

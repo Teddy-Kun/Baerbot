@@ -110,8 +110,6 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 
 	register_active_chatter(Box::from(chatter_name));
 
-	let msg = msg.to_lowercase();
-
 	if (msg.contains('.') || msg.contains("dot")) && msg.contains("cheap viewers") {
 		_ = TWITCH_CLIENT
 			.read()
@@ -129,12 +127,12 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 
 	let mut split = msg.split(' ');
 
-	let msg = match split.next() {
+	let cmd = match split.next() {
 		None => return Ok(()),
 		Some(m) => m,
 	};
 
-	let mut action = match get_action(msg.to_lowercase().as_str()).await {
+	let mut action = match get_action(cmd.to_lowercase().as_str()).await {
 		Some(a) => a,
 		None => return Ok(()),
 	};
@@ -143,9 +141,10 @@ async fn handle_msg(server_msg: ServerMessage) -> Result<(), Error> {
 		return Ok(()); // action is still on cooldown
 	}
 
-	tracing::debug!("action: {action:?}");
+	let msg = split.next();
+	tracing::debug!("action: {action:?}; msg: {msg:?}");
 
-	action.exec.exec(chatter_name, None).await;
+	action.exec.exec(chatter_name, msg).await;
 
 	Ok(())
 }

@@ -49,6 +49,13 @@ impl Error {
 		Self { msg, src: None }
 	}
 
+	pub fn from_str(s: &'static str, msg: ErrorMsg) -> Self {
+		Self {
+			src: Some(anyhow::Error::msg(s)),
+			msg,
+		}
+	}
+
 	pub fn from_err(src: anyhow::Error, msg: ErrorMsg) -> Self {
 		// TODO: log error
 		Self {

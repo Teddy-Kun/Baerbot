@@ -6,7 +6,7 @@ use tts::{Features, Tts, Voice};
 
 use crate::{
 	config::CONFIG,
-	error::{Error, Result},
+	error::{Error, ErrorMsg, Result},
 };
 
 #[derive(Debug, Deserialize, Serialize, Type)]
@@ -142,7 +142,11 @@ pub fn set_active_voice(voice: &VoiceData) -> Result<(), Error> {
 	Ok(())
 }
 
-pub fn speak(s: impl Into<String>, voice_overwrite: Option<VoiceData>) -> Result<(), Error> {
+pub fn speak(s: String, voice_overwrite: Option<VoiceData>) -> Result<(), Error> {
+	if s.is_empty() {
+		return Err(Error::from_str("Cannot say empty message", ErrorMsg::Tts));
+	}
+
 	if let Some(tts_data) = TTS_DATA.write().as_mut() {
 		if let Some(overwrite) = &voice_overwrite
 			&& let Some(voice) = tts_data
@@ -154,7 +158,9 @@ pub fn speak(s: impl Into<String>, voice_overwrite: Option<VoiceData>) -> Result
 		}
 
 		tts_data.is_speaking = true;
+		tracing::debug!("Trying to say \"{s}\"");
 		tts_data.tts.speak(s, false)?;
+		tracing::debug!("Spoke");
 
 		if voice_overwrite.is_some()
 			&& let Some(voice) = tts_data.voices.get(tts_data.selected_voice)
