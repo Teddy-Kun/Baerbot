@@ -225,7 +225,7 @@ struct VoiceCfg {
 #[specta::specta]
 fn get_tts_voices() -> VoiceCfg {
 	VoiceCfg {
-		active: beanybot_lib::tts::get_active(),
+		active: beanybot_lib::tts::get_active_voice(),
 		voices: beanybot_lib::tts::get_voices(),
 	}
 }
