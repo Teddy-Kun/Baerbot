@@ -2,9 +2,9 @@
 <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 
 <svg
-   width="800px"
-   height="800px"
-   viewBox="-0.5 0 20 20"
+   width="905"
+   height="905"
+   viewBox="-0.5 0 22.625 22.625"
    version="1.1"
    id="svg1"
    sodipodi:docname="beanybot.svg"
@@ -25,9 +25,9 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="4.2673894"
-     inkscape:cx="638.79804"
-     inkscape:cy="498.54836"
+     inkscape:zoom="0.72832848"
+     inkscape:cx="244.39522"
+     inkscape:cy="678.95189"
      inkscape:window-width="2560"
      inkscape:window-height="1415"
      inkscape:window-x="0"
@@ -40,35 +40,78 @@
      id="desc1">Created with Sketch.</desc>
   <defs
      id="defs1" />
+  <ellipse
+     style="fill:#000006;fill-opacity:1;stroke-width:0.0256709"
+     id="path2"
+     ry="2.0878212"
+     rx="2.0961061"
+     cy="2.0878212"
+     cx="2.508606" />
+  <ellipse
+     style="fill:#9a5b06;fill-opacity:1;stroke-width:0.0222073"
+     id="path2-5"
+     ry="1.7647061"
+     rx="1.8558409"
+     cy="2.0983229"
+     cx="2.5488708" />
+  <ellipse
+     style="fill:#5a3604;fill-opacity:1;stroke-width:0.0179185"
+     id="path2-5-2"
+     ry="1.4705886"
+     rx="1.4498757"
+     cy="2.6210442"
+     cx="2.8412697" />
+  <ellipse
+     style="fill:#000006;fill-opacity:1;stroke-width:0.0256709"
+     id="path2-7"
+     ry="2.0878212"
+     rx="2.0961061"
+     cy="2.1011524"
+     cx="20.026756" />
+  <ellipse
+     style="fill:#9a5b06;fill-opacity:1;stroke-width:0.0222073"
+     id="path2-5-0"
+     ry="1.7647061"
+     rx="1.8558409"
+     cy="2.235929"
+     cx="19.992456" />
+  <ellipse
+     style="fill:#5a3604;fill-opacity:1;stroke-width:0.0179185"
+     id="path2-5-2-9"
+     ry="1.4705886"
+     rx="1.4498757"
+     cy="2.5340219"
+     cx="19.815762" />
   <rect
      style="fill:#9a5b06;fill-opacity:1;stroke-width:0.025"
      id="rect2"
      width="3.3041279"
      height="4.0774341"
-     x="6.3425913"
-     y="13.286812" />
+     x="7.2716584"
+     y="15.853088" />
   <rect
      style="fill:#9a5b06;fill-opacity:1;stroke-width:0.024816"
      id="rect1"
      width="14.459249"
      height="12.389353"
-     x="2.5463586"
-     y="1.6169136" />
+     x="3.4754286"
+     y="4.1831942" />
   <g
      id="Page-1"
      stroke="none"
      stroke-width="1"
      fill="none"
-     fill-rule="evenodd">
+     fill-rule="evenodd"
+     transform="translate(0.92906964,2.5662802)">
     <g
        id="Dribbble-Light-Preview"
-       transform="translate(-141.000000, -7399.000000)"
+       transform="translate(-141,-7399)"
        fill="#000000">
       <g
          id="icons"
-         transform="translate(56.000000, 160.000000)">
+         transform="translate(56,160)">
         <path
-           d="M97,7249 L99,7249 L99,7244 L97,7244 L97,7249 Z M92,7249 L94,7249 L94,7244 L92,7244 L92,7249 Z M102,7250.307 L102,7241 L88,7241 L88,7253 L92,7253 L92,7255.953 L94.56,7253 L99.34,7253 L102,7250.307 Z M98.907,7256 L94.993,7256 L92.387,7259 L90,7259 L90,7256 L85,7256 L85,7242.48 L86.3,7239 L104,7239 L104,7251.173 L98.907,7256 Z"
+           d="m 97,7249 h 2 v -5 h -2 z m -5,0 h 2 v -5 h -2 z m 10,1.307 V 7241 H 88 v 12 h 4 v 2.953 L 94.56,7253 h 4.78 z M 98.907,7256 h -3.914 l -2.606,3 H 90 v -3 h -5 v -13.52 L 86.3,7239 H 104 v 12.173 z"
            id="twitch-[#182]" />
       </g>
     </g>
