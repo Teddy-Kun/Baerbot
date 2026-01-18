@@ -1,6 +1,3 @@
-#[cfg(target_os = "linux")]
-use ashpd::desktop::Color;
-
 use colors_transform::{Color as Col, Rgb};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -30,8 +27,8 @@ impl ColorSchemeAccent {
 }
 
 #[cfg(target_os = "linux")]
-impl From<Color> for ColorSchemeAccent {
-	fn from(value: Color) -> Self {
+impl From<ashpd::desktop::Color> for ColorSchemeAccent {
+	fn from(value: ashpd::desktop::Color) -> Self {
 		ColorSchemeAccent::new(
 			(255.0 * value.red()) as u8,
 			(255.0 * value.green()) as u8,
