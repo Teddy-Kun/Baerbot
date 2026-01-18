@@ -1,7 +1,7 @@
 [package]
 name = "baerbot"
 version = "0.1.0"
-description = "A Tauri App"
+description = "Just another Twitch Bot"
 authors = ["Teddy-Kun"]
 edition = "2024"
 
