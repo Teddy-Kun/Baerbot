@@ -8,7 +8,11 @@ use clap_config::ClapConfig;
 use serde::{Deserialize, Serialize};
 use twitch_oauth2::Scope;
 
-use crate::{error::Error, utils::CFG_DIR_PATH};
+use crate::{
+	error::Error,
+	tts::{TtsBackend, VoiceData},
+	utils::CFG_DIR_PATH,
+};
 
 // global config
 pub static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);
@@ -61,11 +65,27 @@ impl Default for ObsConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct TtsConfig {
+	pub backend: TtsBackend,
+	pub voice: Option<VoiceData>,
+}
+
+impl Default for TtsConfig {
+	fn default() -> Self {
+		Self {
+			backend: TtsBackend::System,
+			voice: None,
+		}
+	}
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
 	pub use_os_color: Option<bool>,
 	pub custom_color: Option<Box<str>>,
 	pub enable_redeems: Option<bool>,
 	pub obs: Option<ObsConfig>,
+	pub tts: Option<TtsConfig>,
 	// used to track the scopes the token was last initialized with
 	// if changed the token should be forgotten
 	pub scopes: Option<Vec<Scope>>,
@@ -113,6 +133,7 @@ impl Default for Config {
 			custom_color: None,
 			enable_redeems: Some(true),
 			obs: Some(ObsConfig::default()),
+			tts: Some(TtsConfig::default()),
 			scopes: Some(vec![
 				Scope::ChatEdit,
 				Scope::ChatRead,

@@ -7,6 +7,11 @@ use tts::{Features, Tts, Voice};
 use crate::error::{Error, Result};
 
 #[derive(Debug, Deserialize, Serialize, Type)]
+pub enum TtsBackend {
+	System,
+}
+
+#[derive(Debug, Deserialize, Serialize, Type)]
 pub struct VoiceData {
 	pub language: String,
 	pub name: String,
