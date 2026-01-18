@@ -57,6 +57,7 @@ fn init_tts_data() -> Result<TtsData, Error> {
 		tts,
 		voices,
 		selected_voice: 0,
+		is_speaking: false,
 	})
 }
 
