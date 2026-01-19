@@ -1,4 +1,5 @@
 #![warn(clippy::indexing_slicing)]
+#![warn(clippy::large_types_passed_by_value)]
 #![feature(trim_prefix_suffix)]
 #![feature(nonpoison_rwlock)]
 #![feature(nonpoison_mutex)]
