@@ -2,8 +2,6 @@
 
 A 100% local, cross-platform Twitch bot.
 
-This template should help get you started developing with Tauri, SvelteKit and TypeScript in Vite.
-
 The only supported platform are currently Windows and Linux. Android support will probably happen *at some point*. I do not own any Apple devices and that will probably never change. PRs are always welcome though.
 
 ## Recommended IDE Setup
