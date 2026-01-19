@@ -64,6 +64,7 @@ pub trait TtsSystem {
 
 // TODO: init piper
 static TTS_DATA: LazyLock<Mutex<Option<TtsData>>> = LazyLock::new(|| {
+	println!("Piper Voices:\n{:?}", piper::PIPER_VOICES);
 	Mutex::new(match system::init_tts_config(None, None, None) {
 		Ok(t) => Some(TtsData {
 			cfg: TtsBackendCfg::System(t),

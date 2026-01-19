@@ -1,7 +1,7 @@
 [package]
 name = "beanybot"
 version = "0.1.0"
-description = "A local cross-platform Twitch Bot"
+description = "A 100% local, cross-platform Twitch bot"
 authors = ["Teddy-Kun"]
 edition = "2024"
 
@@ -70,6 +70,7 @@ obws = "0.14.0"
 tts = "0.26.3"
 piper-rs = "0.1.9"
 ort-sys = { version = "=2.0.0-rc.9", default-features = false } # lock to pre 2.0.0-rc10; otherwise piper-rs won't build
+phf = { version = "0.13.1", features = ["macros"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ashpd = { version = "0.12.0", features = ["tokio"], default-features = false }
