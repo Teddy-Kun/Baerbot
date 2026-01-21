@@ -97,6 +97,12 @@ impl From<&'static str> for Error {
 	}
 }
 
+impl From<String> for Error {
+	fn from(value: String) -> Self {
+		Self::from_err(anyhow::Error::msg(value), ErrorMsg::Unknown)
+	}
+}
+
 impl From<ErrorMsg> for Error {
 	fn from(value: ErrorMsg) -> Self {
 		Self::new(value)
@@ -186,6 +192,12 @@ impl From<obws::error::Error> for Error {
 impl From<tts::Error> for Error {
 	fn from(value: tts::Error) -> Self {
 		Self::from_err(value.into(), ErrorMsg::Tts)
+	}
+}
+
+impl From<reqwest::Error> for Error {
+	fn from(value: reqwest::Error) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Unknown)
 	}
 }
 

@@ -5,6 +5,7 @@
 #![feature(nonpoison_mutex)]
 #![feature(sync_nonpoison)]
 #![feature(never_type)]
+#![feature(file_buffered)]
 
 #[deny(clippy::unwrap_used)]
 pub mod config;

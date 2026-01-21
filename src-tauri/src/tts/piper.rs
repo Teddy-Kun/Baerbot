@@ -1,6 +1,17 @@
-use std::fs::File;
+use std::{
+	fs::{Dir, File},
+	io::{BufWriter, Write},
+	path::{Path, PathBuf},
+	sync::{
+		Arc, LazyLock,
+		atomic::{AtomicU64, AtomicUsize, Ordering as AtomicOrdering},
+	},
+};
 
-use crate::tts::TtsSystem;
+use futures::StreamExt;
+use tokio::{spawn, task::JoinHandle};
+
+use crate::{error::Error, tts::TtsSystem, utils::NAME_CAPITALIZED};
 
 pub struct TtsConfig {}
 
@@ -26,6 +37,50 @@ impl TtsSystem for TtsConfig {
 	}
 }
 
+static PIPER_DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
+	dirs::data_dir()
+		.expect("no data dir")
+		.join(NAME_CAPITALIZED)
+		.join("piper")
+});
+
+pub struct PiperVoiceDownloader {
+	size: usize,
+	downloaded: Arc<AtomicUsize>,
+	task: JoinHandle<Result<(), Error>>,
+}
+
+impl PiperVoiceDownloader {
+	fn new(file_path: &Path, size: usize, res: reqwest::Response) -> Result<Self, Error> {
+		let mut file = File::create_buffered(file_path)?;
+		let mut stream = res.bytes_stream();
+
+		let downloaded = Arc::new(AtomicUsize::new(0));
+		let inner = downloaded.clone();
+
+		let handle: JoinHandle<Result<(), Error>> = spawn(async move {
+			while let Some(item) = stream.next().await {
+				let chunk = item?;
+				file.write_all(&chunk)?;
+				inner.store(chunk.len(), AtomicOrdering::Relaxed);
+			}
+
+			Ok(())
+		});
+
+		Ok(Self {
+			size,
+			downloaded,
+			task: handle,
+		})
+	}
+
+	pub fn calc_percentage(self) -> f64 {
+		let current = self.downloaded.load(AtomicOrdering::Relaxed) as f64;
+		(current / self.size as f64) * 100.0
+	}
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct PiperVoiceUrls<'p> {
 	example: &'p str,
@@ -34,12 +89,26 @@ pub struct PiperVoiceUrls<'p> {
 }
 
 impl<'p> PiperVoiceUrls<'p> {
-	pub fn play_sample() {
+	pub fn play_sample(&self) {
 		todo!()
 	}
 
-	pub fn download() {
-		todo!()
+	pub async fn download(&self) -> Result<PiperVoiceDownloader, Error> {
+		let client = reqwest::Client::new();
+		let res = client.get(self.json).send().await?;
+		let total_size = res
+			.content_length()
+			.ok_or(format!("unknown file size for {}", self.json))?;
+
+		std::fs::create_dir_all(PIPER_DATA_DIR.as_path())?;
+
+		let downloader = PiperVoiceDownloader::new(
+			PIPER_DATA_DIR.join("test.json").as_path(),
+			total_size as usize,
+			res,
+		)?;
+
+		Ok(downloader)
 	}
 }
 
