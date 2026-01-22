@@ -201,6 +201,24 @@ impl From<reqwest::Error> for Error {
 	}
 }
 
+impl From<tokio::task::JoinError> for Error {
+	fn from(value: tokio::task::JoinError) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Unknown)
+	}
+}
+
+impl From<rodio::PlayError> for Error {
+	fn from(value: rodio::PlayError) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Unknown)
+	}
+}
+
+impl From<rodio::StreamError> for Error {
+	fn from(value: rodio::StreamError) -> Self {
+		Self::from_err(value.into(), ErrorMsg::Unknown)
+	}
+}
+
 #[cfg(target_os = "windows")]
 impl From<windows::core::Error> for Error {
 	fn from(value: windows::core::Error) -> Self {

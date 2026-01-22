@@ -53,7 +53,7 @@ chrono = "0.4.39"
 open = "5.3.2"
 keyring-lib = { version = "1.0.2", features = ["derive"] }
 secret-service = { version = "5.1.0", features = ["rt-tokio-crypto-rust"] }
-rodio = { version = "0.21.1" }
+rodio = "0.21.1"
 tauri-plugin-log = "2.7.0"
 tracing-subscriber = "0.3.20"
 tracing = "0.1.41"
