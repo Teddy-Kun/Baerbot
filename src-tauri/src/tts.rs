@@ -1,11 +1,14 @@
-use std::sync::{LazyLock, nonpoison::Mutex};
+use std::{
+	borrow::Cow,
+	sync::{LazyLock, nonpoison::Mutex},
+};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::error::Error;
+use crate::{error::Error, utils::MaybeOwnedStr};
 
-mod piper;
+pub mod piper;
 mod system;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, Type)]
@@ -46,8 +49,8 @@ impl From<&TtsBackendCfg> for TtsBackend {
 
 #[derive(Debug, Deserialize, Serialize, Type)]
 pub struct VoiceData {
-	pub language: String,
-	pub name: String,
+	pub language: MaybeOwnedStr,
+	pub name: MaybeOwnedStr,
 }
 
 pub struct TtsData {

@@ -1,10 +1,10 @@
 use std::{
-	fs::{Dir, File},
-	io::{BufWriter, Write},
+	fs::File,
+	io::Write,
 	path::{Path, PathBuf},
 	sync::{
 		Arc, LazyLock,
-		atomic::{AtomicU64, AtomicUsize, Ordering as AtomicOrdering},
+		atomic::{AtomicUsize, Ordering as AtomicOrdering},
 	},
 };
 
@@ -21,7 +21,15 @@ impl TtsSystem for TtsConfig {
 	}
 
 	fn get_voices(&self) -> Vec<super::VoiceData> {
-		todo!()
+		PIPER_VOICES
+			.entries()
+			.flat_map(|(lang, value)| {
+				value.keys().map(|name| super::VoiceData {
+					language: (*lang).into(),
+					name: (*name).into(),
+				})
+			})
+			.collect()
 	}
 
 	fn set_active_voice(&mut self, voice: &super::VoiceData) -> Result<(), crate::error::Error> {
@@ -64,7 +72,7 @@ impl PiperVoiceDownloader {
 				file.write_all(&chunk)?;
 				inner.store(chunk.len(), AtomicOrdering::Relaxed);
 			}
-
+			file.flush()?;
 			Ok(())
 		});
 
@@ -89,26 +97,55 @@ pub struct PiperVoiceUrls<'p> {
 }
 
 impl<'p> PiperVoiceUrls<'p> {
+	fn get_example_filename(&self) -> &'p str {
+		let cleaned_query = self.example.split('?').next().unwrap_or("");
+		let name = cleaned_query.rsplit('/').next().unwrap_or("");
+		name
+	}
+
+	fn get_onnx_filename(&self) -> &'p str {
+		let cleaned_query = self.onnx.split('?').next().unwrap_or("");
+		let name = cleaned_query.rsplit('/').next().unwrap_or("");
+		name
+	}
+
+	fn get_json_filename(&self) -> &'p str {
+		let cleaned_query = self.json.split('?').next().unwrap_or("");
+		let name = cleaned_query.rsplit('/').next().unwrap_or("");
+		name
+	}
+
 	pub fn play_sample(&self) {
 		todo!()
 	}
 
-	pub async fn download(&self) -> Result<PiperVoiceDownloader, Error> {
+	pub async fn download(&self) -> Result<(PiperVoiceDownloader, PiperVoiceDownloader), Error> {
+		std::fs::create_dir_all(PIPER_DATA_DIR.as_path())?;
+
 		let client = reqwest::Client::new();
 		let res = client.get(self.json).send().await?;
 		let total_size = res
 			.content_length()
 			.ok_or(format!("unknown file size for {}", self.json))?;
 
-		std::fs::create_dir_all(PIPER_DATA_DIR.as_path())?;
-
-		let downloader = PiperVoiceDownloader::new(
-			PIPER_DATA_DIR.join("test.json").as_path(),
+		let json_downloader = PiperVoiceDownloader::new(
+			PIPER_DATA_DIR.join(self.get_json_filename()).as_path(),
 			total_size as usize,
 			res,
 		)?;
 
-		Ok(downloader)
+		let res = client.get(self.onnx).send().await?;
+		let total_size = res
+			.content_length()
+			.ok_or(format!("unknown file size for {}", self.json))?;
+
+		let onnx_downloader = PiperVoiceDownloader::new(
+			PIPER_DATA_DIR.join(self.get_onnx_filename()).as_path(),
+			total_size as usize,
+			res,
+		)?;
+
+		Ok((json_downloader, onnx_downloader))
 	}
 }
 

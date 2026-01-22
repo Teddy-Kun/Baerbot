@@ -53,7 +53,10 @@ pub fn init_tts_config(
 		let found_index = voices
 			.iter()
 			.enumerate()
-			.find(|(_, v)| v.language() == voice.language && v.name() == voice.name)
+			.find(|(_, v)| {
+				v.language().as_str() == voice.language.as_str()
+					&& v.name().as_str() == voice.name.as_str()
+			})
 			.map(|(i, _)| i);
 
 		voice_index = found_index;
@@ -70,8 +73,8 @@ impl TtsSystem for TtsConfig {
 	fn get_active_voice(&self) -> Option<VoiceData> {
 		let voice = self.voices.get(self.selected_voice?)?;
 		Some(VoiceData {
-			language: voice.language().to_string(),
-			name: voice.name(),
+			language: voice.language().to_string().into(),
+			name: voice.name().into(),
 		})
 	}
 
@@ -79,19 +82,17 @@ impl TtsSystem for TtsConfig {
 		self.voices
 			.iter()
 			.map(|v| VoiceData {
-				language: v.language().to_string(),
-				name: v.name(),
+				language: v.language().to_string().into(),
+				name: v.name().into(),
 			})
 			.collect()
 	}
 
 	fn set_active_voice(&mut self, voice: &VoiceData) -> Result<(), Error> {
-		let (index, voice) = match self
-			.voices
-			.iter()
-			.enumerate()
-			.find(|(_, v)| v.language() == voice.language && v.name() == voice.name)
-		{
+		let (index, voice) = match self.voices.iter().enumerate().find(|(_, v)| {
+			v.language().as_str() == voice.language.as_str()
+				&& v.name().as_str() == voice.name.as_str()
+		}) {
 			Some(v) => v,
 			None => {
 				return Err(Error::from_str(
@@ -114,11 +115,10 @@ impl TtsSystem for TtsConfig {
 
 		let mut overwrote = false;
 		if let Some(overwrite) = voice_overwrite {
-			match self
-				.voices
-				.iter()
-				.find(|v| v.language() == overwrite.language && v.name() == overwrite.name)
-			{
+			match self.voices.iter().find(|v| {
+				v.language().as_str() == overwrite.language.as_str()
+					&& v.name().as_str() == overwrite.name.as_str()
+			}) {
 				None => tracing::warn!("Voice overwrite not found"),
 				Some(voice) => {
 					self.tts.set_voice(voice)?;
