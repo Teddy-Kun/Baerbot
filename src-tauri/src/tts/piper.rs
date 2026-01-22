@@ -99,20 +99,17 @@ pub struct PiperVoiceUrls<'p> {
 impl<'p> PiperVoiceUrls<'p> {
 	fn get_example_filename(&self) -> &'p str {
 		let cleaned_query = self.example.split('?').next().unwrap_or("");
-		let name = cleaned_query.rsplit('/').next().unwrap_or("");
-		name
+		cleaned_query.rsplit('/').next().unwrap_or("")
 	}
 
 	fn get_onnx_filename(&self) -> &'p str {
 		let cleaned_query = self.onnx.split('?').next().unwrap_or("");
-		let name = cleaned_query.rsplit('/').next().unwrap_or("");
-		name
+		cleaned_query.rsplit('/').next().unwrap_or("")
 	}
 
 	fn get_json_filename(&self) -> &'p str {
 		let cleaned_query = self.json.split('?').next().unwrap_or("");
-		let name = cleaned_query.rsplit('/').next().unwrap_or("");
-		name
+		cleaned_query.rsplit('/').next().unwrap_or("")
 	}
 
 	pub fn play_sample(&self) {

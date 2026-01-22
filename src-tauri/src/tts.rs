@@ -1,7 +1,4 @@
-use std::{
-	borrow::Cow,
-	sync::{LazyLock, nonpoison::Mutex},
-};
+use std::sync::{LazyLock, nonpoison::Mutex};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
