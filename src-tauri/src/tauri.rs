@@ -252,6 +252,12 @@ fn set_tts_voice(voice: VoiceData) -> Result<(), ErrorMsg> {
 	Ok(())
 }
 
+#[tauri::command]
+#[specta::specta]
+fn activate_piper() {
+	beanybot_lib::tts::activate_piper()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	let builder = Builder::new().commands(collect_commands![
@@ -273,7 +279,8 @@ pub fn run() {
 		init_obs_overlay,
 		get_tts_voices,
 		test_tts,
-		set_tts_voice
+		set_tts_voice,
+		activate_piper
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

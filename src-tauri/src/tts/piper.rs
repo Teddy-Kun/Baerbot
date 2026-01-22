@@ -17,11 +17,12 @@ pub struct TtsConfig {}
 
 impl TtsSystem for TtsConfig {
 	fn get_active_voice(&self) -> Option<super::VoiceData> {
-		todo!()
+		// TODO
+		None
 	}
 
 	fn get_voices(&self) -> Vec<super::VoiceData> {
-		PIPER_VOICES
+		let mut v: Vec<super::VoiceData> = PIPER_VOICES
 			.entries()
 			.flat_map(|(lang, value)| {
 				value.keys().map(|name| super::VoiceData {
@@ -29,11 +30,14 @@ impl TtsSystem for TtsConfig {
 					name: (*name).into(),
 				})
 			})
-			.collect()
+			.collect();
+		v.sort_unstable();
+		v
 	}
 
 	fn set_active_voice(&mut self, voice: &super::VoiceData) -> Result<(), crate::error::Error> {
-		todo!()
+		// TODO
+		Ok(())
 	}
 
 	fn speak(
@@ -41,7 +45,8 @@ impl TtsSystem for TtsConfig {
 		s: String,
 		voice_overwrite: Option<super::VoiceData>,
 	) -> Result<(), crate::error::Error> {
-		todo!()
+		// TODO
+		Ok(())
 	}
 }
 

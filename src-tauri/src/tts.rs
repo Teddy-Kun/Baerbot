@@ -1,4 +1,7 @@
-use std::sync::{LazyLock, nonpoison::Mutex};
+use std::{
+	cmp::Ordering,
+	sync::{LazyLock, nonpoison::Mutex},
+};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -50,6 +53,32 @@ pub struct VoiceData {
 	pub name: MaybeOwnedStr,
 }
 
+impl Eq for VoiceData {}
+
+impl PartialEq for VoiceData {
+	fn eq(&self, other: &Self) -> bool {
+		self.language.as_str() == other.language.as_str()
+			&& self.name.as_str() == other.name.as_str()
+	}
+}
+
+impl Ord for VoiceData {
+	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+		let lang = self.language.as_str().cmp(other.language.as_str());
+		if lang != Ordering::Equal {
+			return lang;
+		}
+
+		self.name.as_str().cmp(other.name.as_str())
+	}
+}
+
+impl PartialOrd for VoiceData {
+	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
 pub struct TtsData {
 	cfg: TtsBackendCfg,
 	is_speaking: bool,
@@ -64,7 +93,6 @@ pub trait TtsSystem {
 
 // TODO: init piper
 static TTS_DATA: LazyLock<Mutex<Option<TtsData>>> = LazyLock::new(|| {
-	println!("Piper Voices:\n{:?}", piper::PIPER_VOICES);
 	Mutex::new(match system::init_tts_config(None, None, None) {
 		Ok(t) => Some(TtsData {
 			cfg: TtsBackendCfg::System(t),
@@ -103,4 +131,13 @@ pub fn speak(s: String, voice_overwrite: Option<VoiceData>) -> Result<(), Error>
 		None => Ok(()),
 		Some(data) => data.cfg.as_trait_mut().speak(s, voice_overwrite),
 	}
+}
+
+// TODO: remove and think of a better API
+pub fn activate_piper() {
+	let mut data = TTS_DATA.lock();
+	*data = Some(TtsData {
+		cfg: TtsBackendCfg::Piper(piper::TtsConfig {}),
+		is_speaking: false,
+	});
 }

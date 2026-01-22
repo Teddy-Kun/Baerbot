@@ -96,6 +96,9 @@ async setTtsVoice(voice: VoiceData) : Promise<Result<null, ErrorMsg>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async activatePiper() : Promise<void> {
+    await TAURI_INVOKE("activate_piper");
 }
 }
 

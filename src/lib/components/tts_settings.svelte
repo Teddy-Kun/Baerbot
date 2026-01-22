@@ -59,6 +59,13 @@
 			});
 	}
 
+	function test_piper(): void {
+		commands.activatePiper().then(() => {
+			voices = {};
+			update_voices();
+		});
+	}
+
 	update_voices();
 </script>
 
@@ -71,6 +78,7 @@
 		</div>
 	{:else}
 		<div class="flex w-full gap-2 mb-2">
+			<Button onclick={test_piper}>TEST PIPER</Button>
 			{#if languages.length}
 				<Select.Root type="single" onValueChange={select_language}>
 					<Select.Trigger>
