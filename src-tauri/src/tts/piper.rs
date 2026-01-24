@@ -90,7 +90,7 @@ impl PiperVoiceDownloader {
 		file_path: PathBuf,
 		size: usize,
 		res: reqwest::Response,
-		callback: Option<F>,
+		callback: F,
 	) -> Result<Self, Error>
 	where
 		F: Fn(usize, usize, f64) + Send + 'static,
@@ -106,13 +106,11 @@ impl PiperVoiceDownloader {
 				let chunk = item?;
 				file.write_all(&chunk)?;
 				let prev = inner.fetch_add(chunk.len(), AtomicOrdering::SeqCst);
-				if let Some(callback) = &callback {
-					callback(
-						prev + chunk.len(),
-						size,
-						(prev as f64 / size as f64) * 100.0,
-					)
-				}
+				callback(
+					prev + chunk.len(),
+					size,
+					(prev as f64 / size as f64) * 100.0,
+				)
 			}
 			file.flush()?;
 			Ok(())
@@ -198,7 +196,7 @@ impl<'p> PiperVoiceUrls<'p> {
 			PIPER_DATA_DIR.join(self.get_onnx_filename()),
 			total_size as usize,
 			res,
-			Some(progress),
+			progress,
 		)?;
 
 		let res = client.get(self.json).send().await?;
@@ -211,7 +209,7 @@ impl<'p> PiperVoiceUrls<'p> {
 			PIPER_DATA_DIR.join(self.get_json_filename()),
 			total_size as usize,
 			res,
-			None::<F>,
+			|_, _, _| {},
 		)?;
 
 		// await it, since the json files are tiny and the onnx will 100% be the bottleneck
