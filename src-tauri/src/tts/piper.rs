@@ -85,15 +85,16 @@ pub struct PiperVoiceDownloader {
 	task: JoinHandle<Result<(), Error>>,
 }
 
-pub type DownloadCallback = Box<dyn Fn(usize, usize, f64) + Send + 'static>;
-
 impl PiperVoiceDownloader {
-	fn new(
+	fn new<F>(
 		file_path: PathBuf,
 		size: usize,
 		res: reqwest::Response,
-		callback: Option<DownloadCallback>,
-	) -> Result<Self, Error> {
+		callback: Option<F>,
+	) -> Result<Self, Error>
+	where
+		F: Fn(usize, usize, f64) + Send + 'static,
+	{
 		let mut file = File::create_buffered(file_path.as_path())?;
 		let mut stream = res.bytes_stream();
 
@@ -180,10 +181,10 @@ impl<'p> PiperVoiceUrls<'p> {
 		Ok(())
 	}
 
-	pub async fn download(
-		&self,
-		progress: DownloadCallback,
-	) -> Result<PiperVoiceDownloader, Error> {
+	pub async fn download<F>(&self, progress: F) -> Result<PiperVoiceDownloader, Error>
+	where
+		F: Fn(usize, usize, f64) + Send + 'static,
+	{
 		std::fs::create_dir_all(PIPER_DATA_DIR.as_path())?;
 		let client = reqwest::Client::new();
 
@@ -210,7 +211,7 @@ impl<'p> PiperVoiceUrls<'p> {
 			PIPER_DATA_DIR.join(self.get_json_filename()),
 			total_size as usize,
 			res,
-			None,
+			None::<F>,
 		)?;
 
 		// await it, since the json files are tiny and the onnx will 100% be the bottleneck
