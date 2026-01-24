@@ -215,19 +215,10 @@ async fn init_obs_overlay() -> Result<(), ErrorMsg> {
 	}
 }
 
-#[derive(Debug, Serialize, Type)]
-struct VoiceCfg {
-	active: Option<VoiceData>,
-	voices: Vec<VoiceData>,
-}
-
 #[tauri::command]
 #[specta::specta]
-fn get_tts_voices() -> VoiceCfg {
-	VoiceCfg {
-		active: beanybot_lib::tts::get_active_voice(),
-		voices: beanybot_lib::tts::get_voices(),
-	}
+fn get_tts_voices() -> Vec<VoiceData> {
+	beanybot_lib::tts::get_voices()
 }
 
 #[tauri::command]
@@ -254,8 +245,19 @@ fn set_tts_voice(voice: VoiceData) -> Result<(), ErrorMsg> {
 
 #[tauri::command]
 #[specta::specta]
-fn activate_piper() {
-	beanybot_lib::tts::activate_piper()
+fn set_tts_backend(backend: beanybot_lib::tts::TtsBackend) -> Result<(), ErrorMsg> {
+	if let Err(e) = beanybot_lib::tts::set_backend(backend) {
+		tracing::error!("Error switching TTS Backend: {e}");
+		return Err(ErrorMsg::Tts);
+	};
+
+	Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+fn get_tts_cfg() -> Option<TtsConfig> {
+	CONFIG.read().tts.clone()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -280,7 +282,8 @@ pub fn run() {
 		get_tts_voices,
 		test_tts,
 		set_tts_voice,
-		activate_piper
+		set_tts_backend,
+		get_tts_cfg
 	]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds

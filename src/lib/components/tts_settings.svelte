@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { commands } from "$lib/bindings";
+	import { commands, type TtsBackend } from "$lib/bindings";
 	import Hamster from "./hamster.svelte";
 	import * as Sidebar from "./ui/sidebar/index";
 	import * as Select from "./ui/select/index";
@@ -13,9 +13,26 @@
 
 	let languages: string[] = $derived(Object.keys(voices));
 
+	let selected_backend: TtsBackend = $state("System");
 	let selected_language: string = $state("");
 	let selected_voice: string = $state("");
 	let test_text: string = $state("This is a test message");
+
+	function get_cfg(): void {
+		loading = true;
+		commands
+			.getTtsCfg()
+			.then((res) => {
+				selected_backend = res?.backend ?? "System";
+				selected_language = res?.voice?.language ?? "";
+				if (res?.voice?.name) selected_voice = res.voice.name;
+				else if (selected_language)
+					selected_voice = voices[selected_language][0] ?? "";
+				else selected_voice = "";
+				update_voices();
+			})
+			.finally(() => (loading = false));
+	}
 
 	function select_language(lang: string): void {
 		selected_language = lang;
@@ -27,16 +44,11 @@
 		commands
 			.getTtsVoices()
 			.then((res) => {
-				for (const data of res.voices) {
+				for (const data of res) {
 					if (voices[data.language])
 						voices[data.language].push(data.name);
 					else voices[data.language] = [data.name];
 				}
-
-				if (res.active) {
-					selected_language = res.active.language;
-					selected_voice = res.active.name;
-				} else select_language(languages[0]);
 			})
 			.finally(() => (loading = false));
 	}
@@ -59,17 +71,37 @@
 			});
 	}
 
-	function test_piper(): void {
-		commands.activatePiper().then(() => {
-			voices = {};
-			update_voices();
-		});
+	function setBackend(backend: string): void {
+		commands
+			.setTtsBackend(backend as TtsBackend)
+			.then(() => {
+				selected_backend = backend as TtsBackend;
+				voices = {};
+				get_cfg();
+			})
+			.catch(() => toast.error("Error switching TTS Backend"));
 	}
 
-	update_voices();
+	get_cfg();
 </script>
 
-<Sidebar.Trigger />
+<div class="flex justify-between">
+	<Sidebar.Trigger />
+
+	<div class="flex gap-2 items-center">
+		<label for="backend">Backend:</label>
+		<Select.Root type="single" onValueChange={setBackend}>
+			<Select.Trigger id="backend">
+				{selected_backend}
+			</Select.Trigger>
+
+			<Select.Content>
+				<Select.Item value="System">System</Select.Item>
+				<Select.Item value="Piper">Piper (AI)</Select.Item>
+			</Select.Content>
+		</Select.Root>
+	</div>
+</div>
 
 <div>
 	{#if loading}
@@ -78,7 +110,6 @@
 		</div>
 	{:else}
 		<div class="flex w-full gap-2 mb-2">
-			<Button onclick={test_piper}>TEST PIPER</Button>
 			{#if languages.length}
 				<Select.Root type="single" onValueChange={select_language}>
 					<Select.Trigger>

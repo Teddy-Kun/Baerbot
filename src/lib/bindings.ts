@@ -78,7 +78,7 @@ async initObsOverlay() : Promise<Result<null, ErrorMsg>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getTtsVoices() : Promise<VoiceCfg> {
+async getTtsVoices() : Promise<VoiceData[]> {
     return await TAURI_INVOKE("get_tts_voices");
 },
 async testTts(message: string, voice: VoiceData) : Promise<Result<null, ErrorMsg>> {
@@ -97,8 +97,16 @@ async setTtsVoice(voice: VoiceData) : Promise<Result<null, ErrorMsg>> {
     else return { status: "error", error: e  as any };
 }
 },
-async activatePiper() : Promise<void> {
-    await TAURI_INVOKE("activate_piper");
+async setTtsBackend(backend: TtsBackend) : Promise<Result<null, ErrorMsg>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_tts_backend", { backend }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getTtsCfg() : Promise<TtsConfig | null> {
+    return await TAURI_INVOKE("get_tts_cfg");
 }
 }
 
@@ -120,7 +128,8 @@ export type ExecTarget = "None" | "User" | "Other"
 export type FrontendRedeem = { id: string; color: string; name: string; cost: bigint }
 export type InnerCounter = { counter: number; template: string }
 export type Trigger = { Command: string } | { Redeem: string }
-export type VoiceCfg = { active: VoiceData | null; voices: VoiceData[] }
+export type TtsBackend = "System" | "Piper"
+export type TtsConfig = { backend: TtsBackend; voice: VoiceData | null }
 export type VoiceData = { language: string; name: string }
 
 /** tauri-specta globals **/

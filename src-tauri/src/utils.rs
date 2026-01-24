@@ -42,7 +42,7 @@ pub fn get_unix_milli() -> u64 {
 /// Using this prevents unnecessarily copying the &'static str.
 /// Cow<'a, str> could be used instead but this prevents modification and thus reallocation.
 /// Also its potentially very slightly, minimally more optimized.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum MaybeOwnedStr {
 	String(String),
 	Str(&'static str),

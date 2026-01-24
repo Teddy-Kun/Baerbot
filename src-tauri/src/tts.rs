@@ -6,12 +6,16 @@ use std::{
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::{error::Error, utils::MaybeOwnedStr};
+use crate::{
+	config::{CONFIG, TtsConfig},
+	error::Error,
+	utils::MaybeOwnedStr,
+};
 
 pub mod piper;
 mod system;
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, Type)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize, Serialize, Type)]
 pub enum TtsBackend {
 	System,
 	Piper,
@@ -47,7 +51,7 @@ impl From<&TtsBackendCfg> for TtsBackend {
 	}
 }
 
-#[derive(Debug, Deserialize, Serialize, Type)]
+#[derive(Clone, Debug, Deserialize, Serialize, Type)]
 pub struct VoiceData {
 	pub language: MaybeOwnedStr,
 	pub name: MaybeOwnedStr,
@@ -91,18 +95,31 @@ pub trait TtsSystem {
 	fn speak(&mut self, s: String, voice_overwrite: Option<VoiceData>) -> Result<(), Error>;
 }
 
-// TODO: init piper
+fn init_backend(backend: TtsBackend) -> Result<TtsBackendCfg, Error> {
+	Ok(match backend {
+		TtsBackend::System => TtsBackendCfg::System(system::init_tts_config(None, None, None)?),
+		TtsBackend::Piper => TtsBackendCfg::Piper(piper::TtsConfig {}),
+	})
+}
+
 static TTS_DATA: LazyLock<Mutex<Option<TtsData>>> = LazyLock::new(|| {
-	Mutex::new(match system::init_tts_config(None, None, None) {
-		Ok(t) => Some(TtsData {
-			cfg: TtsBackendCfg::System(t),
+	let tts_init_res: Result<TtsBackendCfg, Error> = match &CONFIG.read().tts {
+		Some(tts_cfg) => init_backend(tts_cfg.backend),
+		None => init_backend(TtsBackend::System),
+	};
+
+	let tts_data = match tts_init_res {
+		Ok(cfg) => Some(TtsData {
+			cfg,
 			is_speaking: false,
 		}),
 		Err(e) => {
-			tracing::error!("Couldn't set up system tts: {e}");
+			tracing::error!("Couldn't set up tts: {e}");
 			None
 		}
-	})
+	};
+
+	Mutex::new(tts_data)
 });
 
 pub fn get_active_voice() -> Option<VoiceData> {
@@ -133,11 +150,33 @@ pub fn speak(s: String, voice_overwrite: Option<VoiceData>) -> Result<(), Error>
 	}
 }
 
-// TODO: remove and think of a better API
-pub fn activate_piper() {
-	let mut data = TTS_DATA.lock();
-	*data = Some(TtsData {
-		cfg: TtsBackendCfg::Piper(piper::TtsConfig {}),
-		is_speaking: false,
+pub fn set_backend(new_backend: TtsBackend) -> Result<(), Error> {
+	{
+		// inner scope for data Mutex
+		let mut data = TTS_DATA.lock();
+		if let Some(active_backend) = data.as_ref()
+			&& new_backend == (&active_backend.cfg).into()
+		{
+			return Ok(()); // backend is already active
+		}
+
+		let cfg = match new_backend {
+			TtsBackend::System => TtsBackendCfg::System(system::init_tts_config(None, None, None)?),
+			TtsBackend::Piper => TtsBackendCfg::Piper(piper::TtsConfig {}),
+		};
+
+		*data = Some(TtsData {
+			cfg,
+			is_speaking: false,
+		});
+	}
+
+	let mut cfg = CONFIG.write();
+	cfg.tts = Some(TtsConfig {
+		backend: new_backend,
+		voice: None,
 	});
+	cfg.save()?;
+
+	Ok(())
 }

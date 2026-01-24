@@ -6,6 +6,7 @@ use std::{
 use clap::Parser;
 use clap_config::ClapConfig;
 use serde::{Deserialize, Serialize};
+use specta::Type;
 use twitch_oauth2::Scope;
 
 use crate::{
@@ -64,7 +65,7 @@ impl Default for ObsConfig {
 	}
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Type)]
 pub struct TtsConfig {
 	pub backend: TtsBackend,
 	pub voice: Option<VoiceData>,
