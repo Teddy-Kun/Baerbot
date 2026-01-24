@@ -1,6 +1,6 @@
 use std::{
 	fs::File,
-	io::{Cursor, Write},
+	io::Write,
 	path::PathBuf,
 	sync::{
 		Arc, LazyLock,
