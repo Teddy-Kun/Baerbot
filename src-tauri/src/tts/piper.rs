@@ -62,7 +62,14 @@ impl TtsSystem for TtsConfig {
 				let voice_data = *lang
 					.get(voice.name.as_str())
 					.ok_or(Error::from_str("voice not found", ErrorMsg::Tts))?;
-				spawn(async move { voice_data.play_sample().await });
+				spawn(async move {
+					if let Err(e) = voice_data
+						.play_sample(voice.language.as_str(), voice.name.as_str())
+						.await
+					{
+						tracing::error!("Error playing sample: {e}");
+					};
+				});
 			}
 		}
 
@@ -152,38 +159,72 @@ impl<'p> PiperVoiceUrls<'p> {
 		cleaned_query.rsplit('/').next().unwrap_or("")
 	}
 
-	pub async fn play_sample(&self) -> Result<(), Error> {
+	pub async fn play_sample(&self, lang: &str, name: &str) -> Result<(), Error> {
 		// Download sample
 		tracing::debug!("Trying to play: {}", self.example);
 
-		let client = reqwest::Client::new();
-		let res = client.get(self.example).send().await?;
-		let total_size = res
-			.content_length()
-			.ok_or(format!("unknown file size for {}", self.json))?;
-		let mut audio_data: Vec<u8> = Vec::with_capacity(total_size as usize);
-		let mut stream = res.bytes_stream();
-		while let Some(item) = stream.next().await {
-			let chunk = item?;
-			audio_data.extend_from_slice(&chunk);
-		}
+		let dir = PIPER_DATA_DIR.join(lang).join(name);
+		std::fs::create_dir_all(dir.as_path())?;
 
-		tracing::debug!("Sample Downloaded, size: {}", audio_data.len());
+		let path = dir.join(self.get_example_filename());
+
+		let audio_sample_file = match File::open_buffered(path.as_path()) {
+			Ok(f) => {
+				tracing::debug!("Got file from disk");
+				f
+			}
+			Err(e) => {
+				if e.kind() != std::io::ErrorKind::NotFound {
+					return Err(e.into());
+				}
+				tracing::debug!("Downloading sample");
+
+				let mut f = File::create_buffered(path.as_path())?;
+
+				let client = reqwest::Client::new();
+				let res = client.get(self.example).send().await?;
+				let total_size =
+					res.content_length()
+						.ok_or(format!("unknown file size for {}", self.json))? as usize;
+				let mut stream = res.bytes_stream();
+
+				let mut received_size = 0;
+				while let Some(item) = stream.next().await {
+					let chunk = item?;
+					f.write_all(&chunk)?;
+					received_size += chunk.len();
+				}
+				if received_size != total_size {
+					tracing::warn!(
+						"Received {received_size} of {total_size}; sample is probably corrupted"
+					);
+				}
+				f.flush()?;
+				drop(f);
+
+				File::open_buffered(path.as_path())?
+			}
+		};
 
 		// play sample
 		let stream_handle = rodio::OutputStreamBuilder::open_default_stream()?;
-		let cursor = Cursor::new(audio_data);
-		let sink = rodio::play(stream_handle.mixer(), cursor)?;
+		let sink = rodio::play(stream_handle.mixer(), audio_sample_file)?;
 		sink.sleep_until_end();
 		sleep(Duration::from_secs(10));
 		Ok(())
 	}
 
-	pub async fn download<F>(&self, progress: F) -> Result<PiperVoiceDownloader, Error>
+	pub async fn download<F>(
+		&self,
+		lang: &str,
+		name: &str,
+		progress: F,
+	) -> Result<PiperVoiceDownloader, Error>
 	where
 		F: Fn(usize, usize, f64) + Send + 'static,
 	{
-		std::fs::create_dir_all(PIPER_DATA_DIR.as_path())?;
+		let base_dir = PIPER_DATA_DIR.join(lang).join(name);
+		std::fs::create_dir_all(base_dir.as_path())?;
 		let client = reqwest::Client::new();
 
 		// start onnx download
@@ -193,7 +234,7 @@ impl<'p> PiperVoiceUrls<'p> {
 			.ok_or(format!("unknown file size for {}", self.json))?;
 
 		let onnx_downloader = PiperVoiceDownloader::new(
-			PIPER_DATA_DIR.join(self.get_onnx_filename()),
+			base_dir.join(self.get_onnx_filename()),
 			total_size as usize,
 			res,
 			progress,
@@ -206,7 +247,7 @@ impl<'p> PiperVoiceUrls<'p> {
 
 		// start json download
 		let json_downloader = PiperVoiceDownloader::new(
-			PIPER_DATA_DIR.join(self.get_json_filename()),
+			base_dir.join(self.get_json_filename()),
 			total_size as usize,
 			res,
 			|_, _, _| {},
