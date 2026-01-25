@@ -22,6 +22,23 @@ use crate::{
 
 pub struct TtsConfig {}
 
+pub async fn download_voice<F>(voice: &super::VoiceData, callback: F) -> Result<(), Error>
+where
+	F: Fn(usize, usize, f64) + Send + 'static,
+{
+	let data = PIPER_VOICES
+		.get(&voice.language)
+		.ok_or(Error::from_str("language not found", ErrorMsg::Tts))?
+		.get(&voice.name)
+		.ok_or(Error::from_str("voice not found", ErrorMsg::Tts))?;
+
+	let downer = data
+		.download(&voice.language, &voice.name, callback)
+		.await?;
+
+	downer.finish().await
+}
+
 impl TtsSystem for TtsConfig {
 	fn get_active_voice(&self) -> Option<super::VoiceData> {
 		// TODO

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use beanybot_lib::{
 	config::{CONFIG, TtsConfig},
 	error::ErrorMsg,
@@ -6,7 +8,7 @@ use beanybot_lib::{
 	tts::VoiceData,
 	twitch::{
 		self, TWITCH_CLIENT,
-		actions::{Action, toggle_disable_action as toggle_action},
+		actions::{Action, ArcStr, toggle_disable_action as toggle_action},
 		auth::{forget_token, load_token},
 		chat::get_random_chatter,
 	},
@@ -19,7 +21,7 @@ use tauri::{
 	menu::{Menu, MenuItem},
 	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
 };
-use tauri_specta::{Builder, collect_commands};
+use tauri_specta::{Builder, Event, collect_commands, collect_events};
 use twitch_oauth2::UserToken;
 
 use crate::logs;
@@ -260,31 +262,65 @@ fn get_tts_cfg() -> Option<TtsConfig> {
 	CONFIG.read().tts.clone()
 }
 
+#[derive(Clone, Debug, Serialize, Type, Event)]
+struct DownloadEvent {
+	id: ArcStr,
+	current: usize,
+	total: usize,
+	percentage: f64,
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn download_piper_voice(handle: AppHandle, voice: VoiceData) -> Result<(), ErrorMsg> {
+	let download_id: Arc<str> = Arc::from(format!(
+		"{}-{}",
+		voice.language.as_str(),
+		voice.name.as_str()
+	));
+	beanybot_lib::tts::piper::download_voice(&voice, move |current, total, percentage| {
+		let event = DownloadEvent {
+			id: ArcStr::from(download_id.clone()),
+			current,
+			total,
+			percentage,
+		};
+		if let Err(e) = event.emit(&handle) {
+			tracing::warn!("Couldn't update download progress {e}");
+		}
+	})
+	.await?;
+	Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-	let builder = Builder::new().commands(collect_commands![
-		greet,
-		login,
-		is_logged_in,
-		logout,
-		get_accent_color,
-		get_all_actions,
-		add_action,
-		remove_action,
-		get_rand_chatter,
-		open_log_dir,
-		get_current_logs,
-		get_redeems,
-		toggle_disable_action,
-		redeems_enabled,
-		connect_obs,
-		init_obs_overlay,
-		get_tts_voices,
-		test_tts,
-		set_tts_voice,
-		set_tts_backend,
-		get_tts_cfg
-	]);
+	let builder = Builder::new()
+		.commands(collect_commands![
+			greet,
+			login,
+			is_logged_in,
+			logout,
+			get_accent_color,
+			get_all_actions,
+			add_action,
+			remove_action,
+			get_rand_chatter,
+			open_log_dir,
+			get_current_logs,
+			get_redeems,
+			toggle_disable_action,
+			redeems_enabled,
+			connect_obs,
+			init_obs_overlay,
+			get_tts_voices,
+			test_tts,
+			set_tts_voice,
+			set_tts_backend,
+			get_tts_cfg,
+			download_piper_voice
+		])
+		.events(collect_events![DownloadEvent]);
 
 	#[cfg(debug_assertions)] // <- Only export on non-release builds
 	{
